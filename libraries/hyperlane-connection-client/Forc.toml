@@ -1,0 +1,9 @@
+[project]
+authors = ["Trevor Porter"]
+entry = "lib.sw"
+license = "Apache-2.0"
+name = "hyperlane_connection_client"
+
+[dependencies]
+hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "8423fd3" }
+std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "8423fd3" }

@@ -1,0 +1,58 @@
+[[package]]
+name = 'core'
+source = 'path+from-root-91563E0DA237BDEC'
+
+[[package]]
+name = 'hyp-erc20'
+source = 'member'
+dependencies = [
+    'hyperlane_connection_client',
+    'hyperlane_interfaces',
+    'ownership',
+    'std',
+]
+
+[[package]]
+name = 'hyperlane_connection_client'
+source = 'member'
+dependencies = [
+    'hyperlane_interfaces',
+    'std',
+    'std_lib_extended git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b',
+]
+
+[[package]]
+name = 'hyperlane_interfaces'
+source = 'git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b'
+dependencies = [
+    'hyperlane_message',
+    'std',
+]
+
+[[package]]
+name = 'hyperlane_message'
+source = 'path+from-root-9D373045EFC90E1D'
+dependencies = [
+    'std',
+    'std_lib_extended path+from-root-9D373045EFC90E1D',
+]
+
+[[package]]
+name = 'ownership'
+source = 'git+https://github.com/fuellabs/sway-libs?tag=v0.8.0#f6bb5c234e020d556e1bc688e0f1f368dc9b0f9a'
+dependencies = ['std']
+
+[[package]]
+name = 'std'
+source = 'git+https://github.com/fuellabs/sway?tag=v0.37.1#83e5479462ed2883591669a42552606ac25f0a04'
+dependencies = ['core']
+
+[[package]]
+name = 'std_lib_extended'
+source = 'git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b'
+dependencies = ['std']
+
+[[package]]
+name = 'std_lib_extended'
+source = 'path+from-root-9D373045EFC90E1D'
+dependencies = ['std']

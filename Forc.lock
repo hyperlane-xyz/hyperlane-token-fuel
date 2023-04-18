@@ -8,6 +8,7 @@ source = 'member'
 dependencies = [
     'hyperlane_connection_client',
     'hyperlane_interfaces',
+    'hyperlane_router',
     'ownership',
     'std',
 ]
@@ -35,6 +36,16 @@ source = 'path+from-root-9D373045EFC90E1D'
 dependencies = [
     'std',
     'std_lib_extended path+from-root-9D373045EFC90E1D',
+]
+
+[[package]]
+name = 'hyperlane_router'
+source = 'path+from-root-2ABAA7599995B528'
+dependencies = [
+    'hyperlane_connection_client',
+    'hyperlane_interfaces',
+    'std',
+    'std_lib_extended git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b',
 ]
 
 [[package]]

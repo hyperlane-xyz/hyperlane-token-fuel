@@ -3,7 +3,7 @@ library;
 mod r#storage;
 mod interface;
 
-use std::{auth::msg_sender, storage::{get, store}, u256::U256};
+use std::{auth::msg_sender, logging::log, storage::{get, store}, u256::U256};
 
 use hyperlane_interfaces::{Mailbox};
 use std_lib_extended::option::*;
@@ -59,4 +59,17 @@ pub fn interchain_gas_paymaster() -> b256 {
 #[storage(read)]
 pub fn interchain_security_module() -> b256 {
     get(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY).expect("no ISM stored")
+}
+
+#[storage(read)]
+pub fn only_mailbox() {
+    require(msg_sender_b256() == mailbox(), "msg sender not mailbox");
+}
+
+/// Gets the b256 representation of the msg_sender.
+fn msg_sender_b256() -> b256 {
+    match msg_sender().unwrap() {
+        Identity::Address(address) => address.into(),
+        Identity::ContractId(id) => id.into(),
+    }
 }

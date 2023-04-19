@@ -1,0 +1,8 @@
+[project]
+authors = ["Trevor Porter"]
+entry = "lib.sw"
+license = "Apache-2.0"
+name = "hyperlane_gas_router"
+
+[dependencies]
+hyperlane_router = { path = "../hyperlane-router" }

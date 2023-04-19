@@ -1,3 +1,8 @@
 [workspace]
 
-members = ["contracts/hyp-erc20", "libraries/hyperlane-connection-client"]
+members = [
+  "contracts/hyp-erc20",
+  "libraries/hyperlane-connection-client",
+  "libraries/hyperlane-gas-router",
+  "libraries/hyperlane-router",
+]

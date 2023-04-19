@@ -11,7 +11,7 @@ use hyperlane_connection_client::{interchain_gas_paymaster, mailbox};
 
 pub type Routers = StorageMap<u32, b256>;
 
-pub struct RemoteRouterEnrolled {
+pub struct RemoteRouterEnrolledEvent {
     domain: u32,
     router: Option<b256>,
 }
@@ -39,7 +39,7 @@ impl StorageKey<Routers> {
                 map.remove(domain);
             }
         }
-        log(RemoteRouterEnrolled { domain, router });
+        log(RemoteRouterEnrolledEvent { domain, router });
     }
 }
 

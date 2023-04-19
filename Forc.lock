@@ -23,6 +23,14 @@ dependencies = [
 ]
 
 [[package]]
+name = 'hyperlane_gas_router'
+source = 'member'
+dependencies = [
+    'hyperlane_router',
+    'std',
+]
+
+[[package]]
 name = 'hyperlane_interfaces'
 source = 'git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b'
 dependencies = [
@@ -40,7 +48,7 @@ dependencies = [
 
 [[package]]
 name = 'hyperlane_router'
-source = 'path+from-root-2ABAA7599995B528'
+source = 'member'
 dependencies = [
     'hyperlane_connection_client',
     'hyperlane_interfaces',

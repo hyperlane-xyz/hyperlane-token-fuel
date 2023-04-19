@@ -17,6 +17,10 @@ use hyperlane_connection_client::{
     only_mailbox,
 };
 use hyperlane_router::{Routers};
+use hyperlane_gas_router::{
+    GasRouter,
+    GasRouterStorageKeys,
+};
 
 abi Token {
     #[storage(read)]
@@ -28,7 +32,10 @@ abi Token {
 
 storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
-    routers: Routers = Routers {},
+    gas_router: GasRouter = GasRouter {
+        routers: Routers {},
+        destination_gas: StorageMap {},
+    },
 }
 
 configurable {
@@ -67,6 +74,8 @@ impl MessageRecipient for Contract {
     #[storage(read, write)]
     fn handle(origin: u32, sender: b256, message_body: Bytes) {
         only_mailbox();
+
+        // TODO
     }
 
     /// Returns the address of the ISM used for message verification.
@@ -74,5 +83,12 @@ impl MessageRecipient for Contract {
     #[storage(read)]
     fn interchain_security_module() -> ContractId {
         ContractId::from(interchain_security_module())
+    }
+}
+
+fn gas_router_storage_keys() -> GasRouterStorageKeys {
+    GasRouterStorageKeys {
+        routers: storage.gas_router.routers,
+        destination_gas: storage.gas_router.destination_gas,
     }
 }

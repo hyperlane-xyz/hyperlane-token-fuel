@@ -7,6 +7,7 @@ name = 'hyp-erc20'
 source = 'member'
 dependencies = [
     'hyperlane_connection_client',
+    'hyperlane_gas_router',
     'hyperlane_interfaces',
     'hyperlane_router',
     'ownership',

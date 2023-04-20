@@ -1,13 +1,17 @@
 library;
 
+mod interface;
+
 use core::experimental::storage::*;
 use std::experimental::storage::*;
-use std::{bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
+use std::{auth::msg_sender, bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use std_lib_extended::option::*;
 
 use hyperlane_interfaces::{igp::InterchainGasPaymaster, Mailbox};
 use hyperlane_connection_client::{interchain_gas_paymaster, mailbox};
+
+use interface::RemoteRouterConfig;
 
 pub type Routers = StorageMap<u32, b256>;
 
@@ -44,6 +48,17 @@ impl StorageKey<Routers> {
 }
 
 impl StorageKey<Routers> {
+    #[storage(read, write)]
+    pub fn enroll_remote_routers(self, configs: Vec<RemoteRouterConfig>) {
+        let mut i = 0;
+        let len = configs.len();
+        while i < len {
+            let config = configs.get(i).unwrap();
+            self.enroll_remote_router(config.domain, config.router);
+            i += 1;
+        }
+    }
+
     #[storage(read)]
     pub fn is_remote_router(self, domain: u32, router: b256) -> bool {
         match self.routers(domain) {
@@ -81,5 +96,20 @@ impl StorageKey<Routers> {
         }(message_id, destination_domain, gas_amount, gas_payment_refund_address);
 
         message_id
+    }
+}
+
+impl StorageKey<Routers> {
+    #[storage(read)]
+    pub fn only_remote_router(self, domain: u32, router: b256) {
+        require(self.is_remote_router(domain, router), "provided router is not enrolled for origin domain");
+    }
+}
+
+/// Gets the b256 representation of the msg_sender.
+fn msg_sender_b256() -> b256 {
+    match msg_sender().unwrap() {
+        Identity::Address(address) => address.into(),
+        Identity::ContractId(id) => id.into(),
     }
 }

@@ -2995,6 +2995,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperlane-router-test"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio 1.27.0",
+]
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"

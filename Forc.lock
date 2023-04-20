@@ -23,6 +23,14 @@ dependencies = [
 ]
 
 [[package]]
+name = 'hyperlane-router-test'
+source = 'member'
+dependencies = [
+    'hyperlane_router',
+    'std',
+]
+
+[[package]]
 name = 'hyperlane_connection_client'
 source = 'member'
 dependencies = [

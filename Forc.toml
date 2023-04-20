@@ -7,4 +7,5 @@ members = [
   "libraries/hyperlane-router",
 
   "tests/hyperlane-connection-client-test",
+  "tests/hyperlane-router-test",
 ]

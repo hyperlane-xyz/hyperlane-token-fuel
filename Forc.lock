@@ -15,6 +15,14 @@ dependencies = [
 ]
 
 [[package]]
+name = 'hyperlane-connection-client-test'
+source = 'member'
+dependencies = [
+    'hyperlane_connection_client',
+    'std',
+]
+
+[[package]]
 name = 'hyperlane_connection_client'
 source = 'member'
 dependencies = [

@@ -1,0 +1,17 @@
+[workspace]
+
+members = [
+    "tests/hyperlane-connection-client-test",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/hyperlane-xyz/hyperlane-token-sway"
+authors = ["Abacus Works"]
+
+[workspace.dependencies]
+fuels = { git = "https://github.com/FuelLabs/fuels-rs", rev = "f5d08d6" }
+test-utils = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "a57ee2a" }
+tokio = { version = "1.12" }

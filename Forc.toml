@@ -8,4 +8,6 @@ members = [
 
   "tests/hyperlane-connection-client-test",
   "tests/hyperlane-router-test",
+
+  "mocks/mock-interchain-gas-paymaster",
 ]

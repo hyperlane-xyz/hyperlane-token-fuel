@@ -51,8 +51,16 @@ dependencies = [
 name = 'hyperlane_interfaces'
 source = 'git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b'
 dependencies = [
-    'hyperlane_message',
+    'hyperlane_message path+from-root-9D373045EFC90E1D',
     'std',
+]
+
+[[package]]
+name = 'hyperlane_message'
+source = 'git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b'
+dependencies = [
+    'std',
+    'std_lib_extended path+from-root-DEDF1042D43ACA9F',
 ]
 
 [[package]]
@@ -82,6 +90,16 @@ dependencies = [
 ]
 
 [[package]]
+name = 'mock-mailbox'
+source = 'member'
+dependencies = [
+    'hyperlane_interfaces',
+    'hyperlane_message git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b',
+    'std',
+    'std_lib_extended git+https://github.com/hyperlane-xyz/fuel-contracts?rev#8423fd365a420b99c0add49365ff3b513f680a1b',
+]
+
+[[package]]
 name = 'ownership'
 source = 'git+https://github.com/fuellabs/sway-libs?tag=v0.8.0#f6bb5c234e020d556e1bc688e0f1f368dc9b0f9a'
 dependencies = ['std']
@@ -99,4 +117,9 @@ dependencies = ['std']
 [[package]]
 name = 'std_lib_extended'
 source = 'path+from-root-9D373045EFC90E1D'
+dependencies = ['std']
+
+[[package]]
+name = 'std_lib_extended'
+source = 'path+from-root-DEDF1042D43ACA9F'
 dependencies = ['std']

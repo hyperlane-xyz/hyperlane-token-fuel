@@ -10,4 +10,5 @@ members = [
   "tests/hyperlane-router-test",
 
   "mocks/mock-interchain-gas-paymaster",
+  "mocks/mock-mailbox",
 ]

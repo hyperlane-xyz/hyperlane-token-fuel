@@ -17,11 +17,7 @@ use hyperlane_connection_client::{
 
 abi HyperlaneConnectionClientTest {
     #[storage(read, write)]
-    fn initialize(
-        mailbox_id: b256,
-        igp: b256,
-        module: b256,
-    );
+    fn initialize(mailbox_id: b256, igp: b256, module: b256);
 
     #[storage(read)]
     fn only_mailbox();
@@ -29,11 +25,7 @@ abi HyperlaneConnectionClientTest {
 
 impl HyperlaneConnectionClientTest for Contract {
     #[storage(read, write)]
-    fn initialize(
-        mailbox_id: b256,
-        igp: b256,
-        module: b256,
-    ) {
+    fn initialize(mailbox_id: b256, igp: b256, module: b256) {
         initialize(mailbox_id, igp, module);
     }
 

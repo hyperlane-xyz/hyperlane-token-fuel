@@ -17,10 +17,7 @@ use hyperlane_connection_client::{
     only_mailbox,
 };
 use hyperlane_router::{Routers};
-use hyperlane_gas_router::{
-    GasRouter,
-    GasRouterStorageKeys,
-};
+use hyperlane_gas_router::{GasRouter, GasRouterStorageKeys};
 
 abi Token {
     #[storage(read)]

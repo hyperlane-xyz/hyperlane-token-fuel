@@ -8,12 +8,7 @@ use std::{
     storage::StorageBytes,
 };
 
-use hyperlane_interfaces::{
-    DispatchIdEvent,
-    Mailbox,
-    MessageRecipient,
-    ProcessEvent,
-};
+use hyperlane_interfaces::{DispatchIdEvent, Mailbox, MessageRecipient, ProcessEvent};
 use hyperlane_message::EncodedMessage;
 
 use std_lib_extended::option::*;

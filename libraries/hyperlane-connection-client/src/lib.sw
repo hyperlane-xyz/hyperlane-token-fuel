@@ -31,13 +31,12 @@ pub struct InterchainSecurityModuleSetEvent {
 /// Sets the mailbox, IGP, and ISM.
 /// Reverts if any of them have already been set.
 #[storage(read, write)]
-pub fn initialize(mailbox: b256, interchain_gas_paymaster: b256, interchain_security_module: b256) {
-    require(
-        try_mailbox().is_none() &&
-        try_interchain_gas_paymaster().is_none() &&
-        try_interchain_security_module().is_none(),
-        "hyperlane connection client already initialized"
-    );
+pub fn initialize(
+    mailbox: b256,
+    interchain_gas_paymaster: b256,
+    interchain_security_module: b256,
+) {
+    require(try_mailbox().is_none() && try_interchain_gas_paymaster().is_none() && try_interchain_security_module().is_none(), "hyperlane connection client already initialized");
 
     set_mailbox(mailbox);
     set_interchain_gas_paymaster(interchain_gas_paymaster);

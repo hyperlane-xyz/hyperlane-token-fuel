@@ -1,10 +1,12 @@
-use fuels::{prelude::*, tx::{ContractId, Receipt}, types::{Bits256, Identity}, programs::call_response::FuelCallResponse};
-
-use hyperlane_core::{H256, Decode, HyperlaneMessage as HyperlaneAgentMessage };
-use test_utils::{
-    bits256_to_h256,
-    h256_to_bits256,
+use fuels::{
+    prelude::*,
+    programs::call_response::FuelCallResponse,
+    tx::{ContractId, Receipt},
+    types::{Bits256, Identity},
 };
+
+use hyperlane_core::{Decode, HyperlaneMessage as HyperlaneAgentMessage, H256};
+use test_utils::{bits256_to_h256, h256_to_bits256};
 
 // Load abi from json
 abigen!(Contract(
@@ -155,7 +157,7 @@ async fn enroll_remote_router_0_with_gas_amount(
 #[tokio::test]
 async fn test_destination_gas_configs() {
     let (instance, _id) = get_contract_instance().await;
-    
+
     let configs = vec![
         GasRouterConfig {
             domain: TEST_DOMAIN_0,
@@ -164,30 +166,56 @@ async fn test_destination_gas_configs() {
         GasRouterConfig {
             domain: TEST_DOMAIN_1,
             gas: 150000,
-        }
+        },
     ];
 
     // Initially, expect the gas to be 0
     for config in configs.iter() {
-        assert_eq!(instance.methods().destination_gas(config.domain).simulate().await.unwrap().value, 0);
+        assert_eq!(
+            instance
+                .methods()
+                .destination_gas(config.domain)
+                .simulate()
+                .await
+                .unwrap()
+                .value,
+            0
+        );
     }
 
     // Now set the gas configs
-    let call = instance.methods().set_destination_gas_configs(configs.clone()).call().await.unwrap();
+    let call = instance
+        .methods()
+        .set_destination_gas_configs(configs.clone())
+        .call()
+        .await
+        .unwrap();
 
     // Confirm the events were logged
     let events = call.get_logs_with_type::<DestinationGasSetEvent>().unwrap();
     assert_eq!(
         events,
-        configs.iter().map(|c| DestinationGasSetEvent {
-            domain: c.domain,
-            gas: c.gas,
-        }).collect::<Vec<_>>(),
+        configs
+            .iter()
+            .map(|c| DestinationGasSetEvent {
+                domain: c.domain,
+                gas: c.gas,
+            })
+            .collect::<Vec<_>>(),
     );
 
     // And that the new gas amounts are set
     for config in configs.iter() {
-        assert_eq!(instance.methods().destination_gas(config.domain).simulate().await.unwrap().value, config.gas);
+        assert_eq!(
+            instance
+                .methods()
+                .destination_gas(config.domain)
+                .simulate()
+                .await
+                .unwrap()
+                .value,
+            config.gas
+        );
     }
 }
 

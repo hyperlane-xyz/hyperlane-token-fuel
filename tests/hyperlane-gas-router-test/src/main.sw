@@ -1,11 +1,7 @@
 contract;
 
 use core::experimental::storage::*;
-use std::{
-    bytes::Bytes,
-    constants::ZERO_B256,
-    experimental::storage::*,
-};
+use std::{bytes::Bytes, constants::ZERO_B256, experimental::storage::*};
 
 impl StorageKey<b256> {
     #[storage(read, write)]
@@ -15,21 +11,9 @@ impl StorageKey<b256> {
 }
 
 use hyperlane_connection_client::initialize;
-use hyperlane_gas_router::{
-    interface::{
-        HyperlaneGasRouter,
-        GasRouterConfig,
-    },
-    GasRouterStorageKeys,
-};
+use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};
 
-use hyperlane_router::{
-    interface::{
-        HyperlaneRouter,
-        RemoteRouterConfig,
-    },
-    Routers,
-};
+use hyperlane_router::{interface::{HyperlaneRouter, RemoteRouterConfig}, Routers};
 
 storage {
     routers: Routers = Routers {},
@@ -42,12 +26,7 @@ abi HyperlaneGasRouterTest {
 
     #[storage(read, write)]
     #[payable]
-    fn dispatch_with_gas(
-        destination_domain: u32,
-        message_body: Bytes,
-        gas_payment: u64,
-        gas_payment_refund_address: Identity,
-    );
+    fn dispatch_with_gas(destination_domain: u32, message_body: Bytes, gas_payment: u64, gas_payment_refund_address: Identity);
 }
 
 impl HyperlaneGasRouterTest for Contract {
@@ -64,12 +43,7 @@ impl HyperlaneGasRouterTest for Contract {
         gas_payment: u64,
         gas_payment_refund_address: Identity,
     ) {
-        gas_router_storage_keys().dispatch_with_gas(
-            destination_domain,
-            message_body,
-            gas_payment,
-            gas_payment_refund_address,
-        );
+        gas_router_storage_keys().dispatch_with_gas(destination_domain, message_body, gas_payment, gas_payment_refund_address);
     }
 }
 

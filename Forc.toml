@@ -1,0 +1,16 @@
+[workspace]
+
+members = [
+  "contracts/hyp-erc20",
+  "libraries/hyperlane-connection-client",
+  "libraries/hyperlane-gas-router",
+  "libraries/hyperlane-router",
+  "libraries/token-interface",
+
+  "tests/hyperlane-connection-client-test",
+  "tests/hyperlane-gas-router-test",
+  "tests/hyperlane-router-test",
+
+  "mocks/mock-interchain-gas-paymaster",
+  "mocks/mock-mailbox",
+]

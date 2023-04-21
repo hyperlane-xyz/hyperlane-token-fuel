@@ -448,7 +448,7 @@ async fn test_dispatch_with_gas_reverts_if_no_router() {
 async fn test_dispatch_with_gas() {
     let (instance, _id) = get_contract_instance().await;
 
-    let (mailbox, igp) = initialize_hyperlane_connection_client(&instance).await;
+    let (_, igp) = initialize_hyperlane_connection_client(&instance).await;
 
     // Enroll
     let test_router = router_0_bits256();

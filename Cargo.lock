@@ -5253,7 +5253,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/hyperlane-xyz/fuel-contracts?rev=a57ee2a#a57ee2a92a9924ae519b6e0a9db97547ad5494b1"
+source = "git+https://github.com/hyperlane-xyz/fuel-contracts?rev=71e6d37#71e6d378896350da04789ce003c3ad70ba3258a4"
 dependencies = [
  "ethers",
  "fuels",

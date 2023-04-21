@@ -11,7 +11,7 @@ use std::{
 use hyperlane_interfaces::{DispatchIdEvent, Mailbox, MessageRecipient, ProcessEvent};
 use hyperlane_message::EncodedMessage;
 
-use std_lib_extended::option::*;
+use std_lib_extended::{auth::msg_sender_b256, option::*};
 
 /// The mailbox version.
 const VERSION: u8 = 0;

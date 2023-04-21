@@ -5,6 +5,6 @@ license = "Apache-2.0"
 name = "mock-mailbox"
 
 [dependencies]
-hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "8423fd3" }
-hyperlane_message = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "8423fd3" }
-std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "8423fd3" }
+hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+hyperlane_message = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }

@@ -6,7 +6,7 @@ mod interface;
 use std::{auth::msg_sender, logging::log, storage::{get, store}, u256::U256};
 
 use hyperlane_interfaces::{Mailbox};
-use std_lib_extended::option::*;
+use std_lib_extended::{auth::msg_sender_b256, option::*};
 
 use storage::{
     INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY,
@@ -104,12 +104,4 @@ fn try_interchain_gas_paymaster() -> Option<b256> {
 #[storage(read)]
 fn try_interchain_security_module() -> Option<b256> {
     get(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY)
-}
-
-/// Gets the b256 representation of the msg_sender.
-fn msg_sender_b256() -> b256 {
-    match msg_sender().unwrap() {
-        Identity::Address(address) => address.into(),
-        Identity::ContractId(id) => id.into(),
-    }
 }

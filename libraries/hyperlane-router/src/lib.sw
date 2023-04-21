@@ -39,8 +39,7 @@ impl StorageKey<Routers> {
                 map.insert(domain, r);
             },
             Option::None => {
-                // This returns whether the storage was previously set - this can be ignored.
-                map.remove(domain);
+                let _ = map.remove(domain);
             }
         }
         log(RemoteRouterEnrolledEvent { domain, router });
@@ -102,13 +101,5 @@ impl StorageKey<Routers> {
     #[storage(read)]
     pub fn only_remote_router(self, domain: u32, router: b256) {
         require(self.is_remote_router(domain, router), "provided router is not enrolled for origin domain");
-    }
-}
-
-/// Gets the b256 representation of the msg_sender.
-fn msg_sender_b256() -> b256 {
-    match msg_sender().unwrap() {
-        Identity::Address(address) => address.into(),
-        Identity::ContractId(id) => id.into(),
     }
 }

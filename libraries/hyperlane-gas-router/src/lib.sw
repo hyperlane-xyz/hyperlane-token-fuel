@@ -59,13 +59,7 @@ impl GasRouterStorageKeys {
         gas_payment: u64,
         gas_payment_refund_address: Identity,
 ) -> b256 {
-        self.routers.dispatch_with_gas(
-            destination_domain,
-            message_body,
-            self.destination_gas(destination_domain),
-            gas_payment,
-            gas_payment_refund_address,
-        )
+        self.routers.dispatch_with_gas(destination_domain, message_body, self.destination_gas(destination_domain), gas_payment, gas_payment_refund_address)
     }
 
     #[storage(read, write)]

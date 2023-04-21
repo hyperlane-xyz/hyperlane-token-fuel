@@ -45,13 +45,13 @@ pub fn initialize(
 
 // ==================== setters ====================
 
-#[storage(read, write)]
+#[storage(write)]
 pub fn set_mailbox(mailbox: b256) {
     store(MAILBOX_STORAGE_KEY, mailbox);
     log(MailboxSetEvent { mailbox });
 }
 
-#[storage(read, write)]
+#[storage(write)]
 pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
     store(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY, interchain_gas_paymaster);
     log(InterchainGasPaymasterSetEvent {
@@ -59,7 +59,7 @@ pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
     });
 }
 
-#[storage(read, write)]
+#[storage(write)]
 pub fn set_interchain_security_module(module: b256) {
     store(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY, module);
     log(InterchainSecurityModuleSetEvent { module });

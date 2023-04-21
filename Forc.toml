@@ -5,6 +5,7 @@ members = [
   "libraries/hyperlane-connection-client",
   "libraries/hyperlane-gas-router",
   "libraries/hyperlane-router",
+  "libraries/token-interface",
 
   "tests/hyperlane-connection-client-test",
   "tests/hyperlane-gas-router-test",

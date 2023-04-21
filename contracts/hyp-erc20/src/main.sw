@@ -19,13 +19,7 @@ use hyperlane_connection_client::{
 use hyperlane_router::Routers;
 use hyperlane_gas_router::GasRouterStorageKeys;
 
-abi Token {
-    #[storage(read)]
-    fn total_supply() -> U256;
-    fn decimals() -> u8;
-    fn name() -> str[64];
-    fn symbol() -> str[32];
-}
+use token_interface::Token;
 
 storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
@@ -34,6 +28,7 @@ storage {
 }
 
 configurable {
+    // See https://github.com/FuelLabs/rfcs/issues/13
     NAME: str[64] = "HypErc20                                                        ",
     SYMBOL: str[32] = "HYP                             ",
     DECIMALS: u8 = 9u8,

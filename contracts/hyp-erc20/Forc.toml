@@ -10,3 +10,4 @@ hyperlane_gas_router = { path = "../../libraries/hyperlane-gas-router" }
 hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
 hyperlane_router = { path = "../../libraries/hyperlane-router" }
 ownership = { git = "https://github.com/fuellabs/sway-libs", tag = "v0.8.0" }
+token_interface = { path = "../../libraries/token-interface" }

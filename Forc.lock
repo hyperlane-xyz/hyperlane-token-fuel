@@ -12,6 +12,7 @@ dependencies = [
     'hyperlane_router',
     'ownership git+https://github.com/fuellabs/sway-libs?tag=v0.8.0#f6bb5c234e020d556e1bc688e0f1f368dc9b0f9a',
     'std',
+    'token_interface',
 ]
 
 [[package]]
@@ -141,4 +142,9 @@ dependencies = ['std']
 [[package]]
 name = 'std_lib_extended'
 source = 'path+from-root-FE6CD7EFF5600710'
+dependencies = ['std']
+
+[[package]]
+name = 'token_interface'
+source = 'member'
 dependencies = ['std']

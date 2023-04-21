@@ -1,12 +1,11 @@
 use fuels::{
     prelude::*,
-    programs::call_response::FuelCallResponse,
-    tx::{ContractId, Receipt},
+    tx::ContractId,
     types::{Bits256, Identity},
 };
 
-use hyperlane_core::{Decode, HyperlaneMessage as HyperlaneAgentMessage, H256};
-use test_utils::{bits256_to_h256, h256_to_bits256};
+use hyperlane_core::{HyperlaneMessage as HyperlaneAgentMessage, H256};
+use test_utils::{bits256_to_h256, get_dispatched_message, h256_to_bits256};
 
 // Load abi from json
 abigen!(Contract(
@@ -33,9 +32,6 @@ mod igp_contract {
 use igp_contract::{MockInterchainGasPaymaster, PayForGasCalled, QuoteGasPaymentCalled};
 use mailbox_contract::MockMailbox;
 
-/// The log id (i.e. the value of rB in the LogData) of a dispatched message log.
-/// "hyp" in bytes
-const DISPATCHED_MESSAGE_LOG_ID: u64 = 0x687970u64;
 const LOCAL_DOMAIN: u32 = 0x6675656cu32;
 
 const TEST_DOMAIN_0: u32 = 11111;
@@ -320,23 +316,4 @@ async fn test_quote_gas_payment() {
             gas_amount,
         }]
     );
-}
-
-fn get_dispatched_message<D>(call: &FuelCallResponse<D>) -> Option<HyperlaneAgentMessage> {
-    call.receipts
-        .iter()
-        .find(|r| {
-            if let Receipt::LogData { rb, .. } = r {
-                *rb == DISPATCHED_MESSAGE_LOG_ID
-            } else {
-                false
-            }
-        })
-        .map(|r| {
-            if let Receipt::LogData { data, .. } = r {
-                HyperlaneAgentMessage::read_from(&mut data.as_slice()).unwrap()
-            } else {
-                panic!("Expected LogData receipt. Receipt: {:?}", r);
-            }
-        })
 }

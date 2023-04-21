@@ -20,7 +20,6 @@ use hyperlane_gas_router::{
         HyperlaneGasRouter,
         GasRouterConfig,
     },
-    GasRouter,
     GasRouterStorageKeys,
 };
 
@@ -32,22 +31,9 @@ use hyperlane_router::{
     Routers,
 };
 
-pub struct Foo {
-    a: b256,
-    b: StorageMap<u64, u64>,
-}
-
 storage {
-    gas_router: GasRouter = GasRouter {
-        routers: Routers {},
-        a: 0,
-        destination_gas: StorageMap {},
-    },
-
-    foo: Foo = Foo {
-        a: ZERO_B256,
-        b: StorageMap {},
-    },
+    routers: Routers = Routers {},
+    destination_gas: StorageMap<u32, u64> = StorageMap {},
 }
 
 abi HyperlaneGasRouterTest {
@@ -62,9 +48,6 @@ abi HyperlaneGasRouterTest {
         gas_payment: u64,
         gas_payment_refund_address: Identity,
     );
-
-    #[storage(read)]
-    fn get_gas_router_storage_keys() -> (b256, u64, b256, u64);
 }
 
 impl HyperlaneGasRouterTest for Contract {
@@ -88,13 +71,6 @@ impl HyperlaneGasRouterTest for Contract {
             gas_payment_refund_address,
         );
     }
-
-    #[storage(read)]
-    fn get_gas_router_storage_keys() -> (b256, u64, b256, u64) {
-        let keys = gas_router_storage_keys();
-        (keys.routers.slot, keys.routers.offset, keys.destination_gas.slot, keys.destination_gas.offset)
-        // (storage.foo.slot, storage.foo.offset, storage.foo.slot, storage.foo.offset)
-    }
 }
 
 impl HyperlaneGasRouter for Contract {
@@ -117,23 +93,23 @@ impl HyperlaneGasRouter for Contract {
 impl HyperlaneRouter for Contract {
     #[storage(read)]
     fn routers(domain: u32) -> Option<b256> {
-        storage.gas_router.routers.routers(domain)
+        storage.routers.routers(domain)
     }
 
     #[storage(read, write)]
     fn enroll_remote_router(domain: u32, router: Option<b256>) {
-        storage.gas_router.routers.enroll_remote_router(domain, router);
+        storage.routers.enroll_remote_router(domain, router);
     }
 
     #[storage(read, write)]
     fn enroll_remote_routers(configs: Vec<RemoteRouterConfig>) {
-        storage.gas_router.routers.enroll_remote_routers(configs);
+        storage.routers.enroll_remote_routers(configs);
     }
 }
 
 fn gas_router_storage_keys() -> GasRouterStorageKeys {
     GasRouterStorageKeys {
-        routers: storage.gas_router.routers,
-        destination_gas: storage.gas_router.destination_gas,
+        routers: storage.routers,
+        destination_gas: storage.destination_gas,
     }
 }

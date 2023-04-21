@@ -17,7 +17,7 @@ use hyperlane_connection_client::{
     only_mailbox,
 };
 use hyperlane_router::{Routers};
-use hyperlane_gas_router::{GasRouter, GasRouterStorageKeys};
+use hyperlane_gas_router::{GasRouterStorageKeys};
 
 abi Token {
     #[storage(read)]
@@ -29,11 +29,13 @@ abi Token {
 
 storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
-    gas_router: GasRouter = GasRouter {
-        routers: Routers {},
-        a: 0,
-        destination_gas: StorageMap {},
-    },
+    // TODO: revisit when multiple StorageMaps play well in a struct.
+    // gas_router: GasRouter = GasRouter {
+    //     routers: Routers {},
+    //     destination_gas: StorageMap {},
+    // },
+    routers: Routers = Routers {},
+    destination_gas: StorageMap<u32, u64> = StorageMap {},
 }
 
 configurable {
@@ -86,7 +88,7 @@ impl MessageRecipient for Contract {
 
 fn gas_router_storage_keys() -> GasRouterStorageKeys {
     GasRouterStorageKeys {
-        routers: storage.gas_router.routers,
-        destination_gas: storage.gas_router.destination_gas,
+        routers: storage.routers,
+        destination_gas: storage.destination_gas,
     }
 }

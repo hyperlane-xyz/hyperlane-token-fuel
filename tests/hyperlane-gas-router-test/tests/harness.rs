@@ -232,18 +232,6 @@ async fn test_dispatch_with_gas() {
 
     let message = get_dispatched_message(&call).expect("no message found");
 
-    println!("a {:?} b {:?}", message, HyperlaneAgentMessage {
-        version: 0u8,
-        nonce: 0u32,
-        origin: LOCAL_DOMAIN,
-        sender: H256::from_slice(instance.id().hash().as_slice()),
-        destination: TEST_DOMAIN_0,
-        recipient: bits256_to_h256(test_router),
-        body: message_body.clone(),
-    });
-
-    println!("storage keys {:?}", instance.methods().get_gas_router_storage_keys().simulate().await.unwrap().value);
-
     // Ensure the message is to the enrolled router
     assert_eq!(
         message.id(),

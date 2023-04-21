@@ -16,8 +16,8 @@ use hyperlane_connection_client::{
     mailbox,
     only_mailbox,
 };
-use hyperlane_router::{Routers};
-use hyperlane_gas_router::{GasRouterStorageKeys};
+use hyperlane_router::Routers;
+use hyperlane_gas_router::GasRouterStorageKeys;
 
 abi Token {
     #[storage(read)]
@@ -29,11 +29,6 @@ abi Token {
 
 storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
-    // TODO: revisit when multiple StorageMaps play well in a struct.
-    // gas_router: GasRouter = GasRouter {
-    //     routers: Routers {},
-    //     destination_gas: StorageMap {},
-    // },
     routers: Routers = Routers {},
     destination_gas: StorageMap<u32, u64> = StorageMap {},
 }
@@ -72,7 +67,7 @@ impl MessageRecipient for Contract {
     /// * `sender` - The sender address on the origin chain.
     /// * `message_body` - Raw bytes content of the message body.
     #[storage(read, write)]
-    fn handle(origin: u32, sender: b256, message_body: Bytes) {
+    fn handle(_origin: u32, _sender: b256, _message_body: Bytes) {
         only_mailbox();
 
         // TODO

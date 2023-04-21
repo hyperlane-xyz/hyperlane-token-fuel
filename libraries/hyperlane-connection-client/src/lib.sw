@@ -14,14 +14,17 @@ use storage::{
     MAILBOX_STORAGE_KEY,
 };
 
+/// Logged when the Mailbox is set.
 pub struct MailboxSetEvent {
     mailbox: b256,
 }
 
+/// Logged when the InterchainGasPaymaster is set.
 pub struct InterchainGasPaymasterSetEvent {
     interchain_gas_paymaster: b256,
 }
 
+/// Logged when the InterchainSecurityModule is set.
 pub struct InterchainSecurityModuleSetEvent {
     module: b256,
 }
@@ -45,12 +48,16 @@ pub fn initialize(
 
 // ==================== setters ====================
 
+/// Sets the Mailbox.
+/// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_mailbox(mailbox: b256) {
     store(MAILBOX_STORAGE_KEY, mailbox);
     log(MailboxSetEvent { mailbox });
 }
 
+/// Sets the InterchainGasPaymaster.
+/// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
     store(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY, interchain_gas_paymaster);
@@ -59,6 +66,8 @@ pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
     });
 }
 
+/// Sets the InterchainSecurityModule.
+/// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_interchain_security_module(module: b256) {
     store(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY, module);
@@ -67,16 +76,19 @@ pub fn set_interchain_security_module(module: b256) {
 
 // ==================== getters ====================
 
+/// Returns the Mailbox, reverting if one is not set.
 #[storage(read)]
 pub fn mailbox() -> b256 {
     try_mailbox().expect("mailbox not set")
 }
 
+/// Returns the InterchainGasPaymaster, reverting if one is not set.
 #[storage(read)]
 pub fn interchain_gas_paymaster() -> b256 {
     try_interchain_gas_paymaster().expect("IGP not set")
 }
 
+/// Returns the InterchainSecurityModule, reverting if one is not set.
 #[storage(read)]
 pub fn interchain_security_module() -> b256 {
     try_interchain_security_module().expect("ISM not set")
@@ -84,6 +96,7 @@ pub fn interchain_security_module() -> b256 {
 
 // ==================== public helpers ====================
 
+/// Reverts if the msg sender is not the Mailbox.
 #[storage(read)]
 pub fn only_mailbox() {
     require(msg_sender_b256() == mailbox(), "msg sender not mailbox");
@@ -91,16 +104,19 @@ pub fn only_mailbox() {
 
 // ==================== internal helpers ====================
 
+/// Returns the Mailbox, or None if one is not set.
 #[storage(read)]
 fn try_mailbox() -> Option<b256> {
     get(MAILBOX_STORAGE_KEY)
 }
 
+/// Returns the InterchainGasPaymaster, or None if one is not set.
 #[storage(read)]
 fn try_interchain_gas_paymaster() -> Option<b256> {
     get(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY)
 }
 
+/// Returns the InterchainSecurityModule, or None if one is not set.
 #[storage(read)]
 fn try_interchain_security_module() -> Option<b256> {
     get(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY)

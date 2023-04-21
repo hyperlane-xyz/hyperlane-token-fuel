@@ -30,7 +30,7 @@ mod igp_contract {
     ));
 }
 
-use igp_contract::{MockInterchainGasPaymaster, PayForGasCalled};
+use igp_contract::{MockInterchainGasPaymaster, PayForGasCalled, QuoteGasPaymentCalled};
 use mailbox_contract::MockMailbox;
 
 /// The log id (i.e. the value of rB in the LogData) of a dispatched message log.
@@ -41,7 +41,6 @@ const LOCAL_DOMAIN: u32 = 0x6675656cu32;
 const TEST_DOMAIN_0: u32 = 11111;
 const TEST_ROUTER_0: &str = "0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe";
 const TEST_DOMAIN_1: u32 = 22222;
-const TEST_ROUTER_1: &str = "0xfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeedfeed";
 
 async fn get_contract_instance() -> (HyperlaneGasRouterTest<WalletUnlocked>, ContractId) {
     // Launch a local network and deploy the contract
@@ -103,10 +102,6 @@ async fn get_mailbox_and_igp(
 
 fn router_0_bits256() -> Bits256 {
     Bits256::from_hex_str(TEST_ROUTER_0).unwrap()
-}
-
-fn router_1_bits256() -> Bits256 {
-    Bits256::from_hex_str(TEST_ROUTER_1).unwrap()
 }
 
 async fn initialize_hyperlane_connection_client(
@@ -224,7 +219,7 @@ async fn test_destination_gas_configs() {
 #[tokio::test]
 async fn test_dispatch_with_gas() {
     let (instance, _id) = get_contract_instance().await;
-    let (mailbox, igp) = initialize_hyperlane_connection_client(&instance).await;
+    let (_, igp) = initialize_hyperlane_connection_client(&instance).await;
 
     let gas_amount = 100000;
     let gas_payment = 1;
@@ -287,6 +282,42 @@ async fn test_dispatch_with_gas() {
             destination_domain: TEST_DOMAIN_0,
             gas_amount,
             refund_address,
+        }]
+    );
+}
+
+// ============== quote_gas_payment ==============
+
+#[tokio::test]
+async fn test_quote_gas_payment() {
+    let (instance, _id) = get_contract_instance().await;
+    let (_, igp) = initialize_hyperlane_connection_client(&instance).await;
+
+    let gas_amount = 100000;
+
+    let test_router = router_0_bits256();
+
+    // Enroll the remote router and set gas amount
+    enroll_remote_router_0_with_gas_amount(&instance, test_router, gas_amount).await;
+
+    let call = instance
+        .methods()
+        .quote_gas_payment(TEST_DOMAIN_0)
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
+        .simulate()
+        .await
+        .unwrap();
+    let events = igp
+        .log_decoder()
+        .get_logs_with_type::<QuoteGasPaymentCalled>(&call.receipts)
+        .unwrap();
+    assert_eq!(
+        events,
+        vec![QuoteGasPaymentCalled {
+            destination_domain: TEST_DOMAIN_0,
+            gas_amount,
         }]
     );
 }

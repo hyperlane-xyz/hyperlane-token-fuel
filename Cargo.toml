@@ -2,6 +2,7 @@
 
 members = [
     "tests/hyperlane-connection-client-test",
+    "tests/hyperlane-gas-router-test",
     "tests/hyperlane-router-test",
 ]
 

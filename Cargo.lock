@@ -2995,6 +2995,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperlane-gas-router-test"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "hyperlane-core",
+ "test-utils",
+ "tokio 1.27.0",
+]
+
+[[package]]
 name = "hyperlane-router-test"
 version = "0.1.0"
 dependencies = [

@@ -31,6 +31,7 @@ storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
     gas_router: GasRouter = GasRouter {
         routers: Routers {},
+        a: 0,
         destination_gas: StorageMap {},
     },
 }

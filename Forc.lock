@@ -26,6 +26,7 @@ dependencies = [
 name = 'hyperlane-router-test'
 source = 'member'
 dependencies = [
+    'hyperlane_connection_client',
     'hyperlane_router',
     'std',
 ]

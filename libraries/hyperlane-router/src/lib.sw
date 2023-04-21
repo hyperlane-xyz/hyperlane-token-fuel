@@ -70,7 +70,6 @@ impl StorageKey<Routers> {
     #[storage(read, write)]
     pub fn dispatch(self, destination_domain: u32, message_body: Bytes) -> b256 {
         let router = self.routers(destination_domain).expect("No router enrolled for domain. Did you specify the right domain ID?");
-
         let mailbox_contract = abi(Mailbox, mailbox());
         mailbox_contract.dispatch(destination_domain, router, message_body)
     }

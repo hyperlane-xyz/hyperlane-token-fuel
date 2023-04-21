@@ -42,7 +42,8 @@ impl Mailbox for Contract {
     ) -> b256 {
         require(message_body.len() <= MAX_MESSAGE_BODY_BYTES, "msg too long");
 
-        let message = EncodedMessage::new(VERSION, count(), LOCAL_DOMAIN, msg_sender_b256(), destination_domain, recipient, message_body);
+        let nonce = count();
+        let message = EncodedMessage::new(VERSION, nonce, LOCAL_DOMAIN, msg_sender_b256(), destination_domain, recipient, message_body);
 
         // Get the message's ID and insert it into the merkle tree.
         let message_id = message.id();
@@ -51,6 +52,9 @@ impl Mailbox for Contract {
         message.log_with_id(DISPATCHED_MESSAGE_LOG_ID);
         // Log the dispatched message ID for easy identification.
         log(DispatchIdEvent { message_id });
+
+        // Increment the count
+        storage.count.write(nonce + 1);
 
         message_id
     }
@@ -97,7 +101,7 @@ impl Mailbox for Contract {
 
 #[storage(read)]
 fn count() -> u32 {
-    storage.count.read()
+    storage.count.try_read().unwrap_or(0)
 }
 
 /// Gets the b256 representation of the msg_sender.

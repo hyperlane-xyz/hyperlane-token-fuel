@@ -1,12 +1,43 @@
-use fuels::{prelude::*, tx::ContractId, types::Bits256};
+use fuels::{
+    prelude::*,
+    programs::call_response::FuelCallResponse,
+    tx::{ContractId, Receipt},
+    types::{Bits256, Identity},
+};
 
-use test_utils::get_revert_string;
+use hyperlane_core::{Decode, HyperlaneMessage as HyperlaneAgentMessage, H256};
+
+use test_utils::{bits256_to_h256, get_revert_string, h256_to_bits256};
 
 // Load abi from json
 abigen!(Contract(
     name = "HyperlaneRouterTest",
     abi = "tests/hyperlane-router-test/out/debug/hyperlane-router-test-abi.json"
 ));
+
+mod mailbox_contract {
+    fuels::prelude::abigen!(Contract(
+        name = "MockMailbox",
+        abi = "mocks/mock-mailbox/out/debug/mock-mailbox-abi.json"
+    ));
+}
+
+mod igp_contract {
+    // Load abi from json
+    fuels::prelude::abigen!(Contract(
+        name = "MockInterchainGasPaymaster",
+        abi =
+            "mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster-abi.json"
+    ));
+}
+
+use igp_contract::{MockInterchainGasPaymaster, PayForGasCalled};
+use mailbox_contract::MockMailbox;
+
+/// The log id (i.e. the value of rB in the LogData) of a dispatched message log.
+/// "hyp" in bytes
+const DISPATCHED_MESSAGE_LOG_ID: u64 = 0x687970u64;
+const LOCAL_DOMAIN: u32 = 0x6675656cu32;
 
 const TEST_DOMAIN_0: u32 = 11111;
 const TEST_ROUTER_0: &str = "0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe";
@@ -40,12 +71,63 @@ async fn get_contract_instance() -> (HyperlaneRouterTest<WalletUnlocked>, Contra
     (instance, id.into())
 }
 
+async fn get_mailbox_and_igp(
+    wallet: WalletUnlocked,
+) -> (
+    MockMailbox<WalletUnlocked>,
+    MockInterchainGasPaymaster<WalletUnlocked>,
+) {
+    let mailbox_configurables =
+        mailbox_contract::MockMailboxConfigurables::new().set_LOCAL_DOMAIN(LOCAL_DOMAIN);
+    let mailbox_id = Contract::deploy(
+        "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
+        &wallet,
+        DeployConfiguration::default().set_configurables(mailbox_configurables),
+    )
+    .await
+    .unwrap();
+
+    let mailbox = MockMailbox::new(mailbox_id.clone(), wallet.clone());
+
+    let igp_id = Contract::deploy(
+        "../../mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster.bin",
+        &wallet,
+        DeployConfiguration::default(),
+    )
+    .await
+    .unwrap();
+
+    let igp = MockInterchainGasPaymaster::new(igp_id.clone(), wallet);
+
+    (mailbox, igp)
+}
+
 fn router_0_bits256() -> Bits256 {
     Bits256::from_hex_str(TEST_ROUTER_0).unwrap()
 }
 
 fn router_1_bits256() -> Bits256 {
     Bits256::from_hex_str(TEST_ROUTER_1).unwrap()
+}
+
+async fn initialize_hyperlane_connection_client(
+    router_test: &HyperlaneRouterTest<WalletUnlocked>,
+) -> (
+    MockMailbox<WalletUnlocked>,
+    MockInterchainGasPaymaster<WalletUnlocked>,
+) {
+    let (mailbox, igp) = get_mailbox_and_igp(router_test.account().clone()).await;
+    router_test
+        .methods()
+        .initialize_hyperlane_connection_client(
+            Bits256(mailbox.id().hash().into()),
+            Bits256(igp.id().hash().into()),
+        )
+        .call()
+        .await
+        .unwrap();
+
+    (mailbox, igp)
 }
 
 // ============== routers, enroll_remote_router, and enroll_remote_routers ==============
@@ -299,6 +381,8 @@ async fn test_dispatch_reverts_if_no_router() {
 async fn test_dispatch() {
     let (instance, _id) = get_contract_instance().await;
 
+    let (mailbox, _) = initialize_hyperlane_connection_client(&instance).await;
+
     // Enroll
     let test_router = router_0_bits256();
     instance
@@ -308,7 +392,230 @@ async fn test_dispatch() {
         .await
         .unwrap();
 
-    // let call = instance.methods().dispatch(TEST_DOMAIN_0, Bytes(vec![])).call().await;
-    // assert!(call.is_err());
-    // assert_eq!(get_revert_string(call.err().unwrap()), "No router enrolled for domain. Did you specify the right domain ID?");
+    let message_body = vec![1, 2, 3, 4, 5];
+
+    let call = instance
+        .methods()
+        .dispatch(TEST_DOMAIN_0, Bytes(message_body.clone()))
+        .set_contract_ids(&[mailbox.contract_id().clone()])
+        .call()
+        .await
+        .unwrap();
+
+    let message = get_dispatched_message(&call).expect("no message found");
+
+    // Ensure the message is to the enrolled router
+    assert_eq!(
+        message.id(),
+        HyperlaneAgentMessage {
+            version: 0u8,
+            nonce: 0u32,
+            origin: LOCAL_DOMAIN,
+            sender: H256::from_slice(instance.id().hash().as_slice()),
+            destination: TEST_DOMAIN_0,
+            recipient: bits256_to_h256(test_router),
+            body: message_body,
+        }
+        .id(),
+    );
+}
+
+// ============== dispatch_with_gas ==============
+
+#[tokio::test]
+async fn test_dispatch_with_gas_reverts_if_no_router() {
+    let (instance, _id) = get_contract_instance().await;
+
+    let call = instance
+        .methods()
+        .dispatch_with_gas(
+            TEST_DOMAIN_0,
+            Bytes(vec![]),
+            0,
+            0,
+            Identity::Address(instance.account().address().into()),
+        )
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "No router enrolled for domain. Did you specify the right domain ID?"
+    );
+}
+
+#[tokio::test]
+async fn test_dispatch_with_gas() {
+    let (instance, _id) = get_contract_instance().await;
+
+    let (mailbox, igp) = initialize_hyperlane_connection_client(&instance).await;
+
+    // Enroll
+    let test_router = router_0_bits256();
+    instance
+        .methods()
+        .enroll_remote_router(TEST_DOMAIN_0, Some(test_router))
+        .call()
+        .await
+        .unwrap();
+
+    let message_body = vec![1, 2, 3, 4, 5];
+
+    let gas_amount = 100000;
+    let payment_amount = 1;
+    let refund_address = Identity::Address(instance.account().address().into());
+
+    let call = instance
+        .methods()
+        .dispatch_with_gas(
+            TEST_DOMAIN_0,
+            Bytes(message_body.clone()),
+            gas_amount,
+            payment_amount,
+            refund_address.clone(),
+        )
+        .call_params(
+            CallParameters::default()
+                .set_asset_id(BASE_ASSET_ID)
+                .set_amount(payment_amount),
+        )
+        .unwrap()
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
+        .call()
+        .await
+        .unwrap();
+
+    let message = get_dispatched_message(&call).expect("no message found");
+
+    // Ensure the message is to the enrolled router
+    assert_eq!(
+        message.id(),
+        HyperlaneAgentMessage {
+            version: 0u8,
+            nonce: 0u32,
+            origin: LOCAL_DOMAIN,
+            sender: H256::from_slice(instance.id().hash().as_slice()),
+            destination: TEST_DOMAIN_0,
+            recipient: bits256_to_h256(test_router),
+            body: message_body,
+        }
+        .id(),
+    );
+
+    // And ensure that interchain gas is paid for
+    let events = igp
+        .log_decoder()
+        .get_logs_with_type::<PayForGasCalled>(&call.receipts)
+        .unwrap();
+    assert_eq!(
+        events,
+        vec![PayForGasCalled {
+            message_id: h256_to_bits256(message.id()),
+            destination_domain: TEST_DOMAIN_0,
+            gas_amount,
+            refund_address,
+        }]
+    );
+}
+
+// ============== is_remote_router & only_remote_router ==============
+
+#[tokio::test]
+async fn test_is_remote_router_and_only_router() {
+    let (instance, _id) = get_contract_instance().await;
+
+    let router_0 = router_0_bits256();
+    let router_1 = router_1_bits256();
+
+    // No router enrolled
+
+    let is_remote_router = instance
+        .methods()
+        .is_remote_router(TEST_DOMAIN_0, router_0)
+        .simulate()
+        .await
+        .unwrap()
+        .value;
+    assert!(!is_remote_router);
+
+    let call = instance
+        .methods()
+        .only_remote_router(TEST_DOMAIN_0, router_0)
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "provided router is not enrolled for origin domain"
+    );
+
+    // Router enrolled, but the router supplied is still incorrect
+
+    // First enroll the router...
+    instance
+        .methods()
+        .enroll_remote_router(TEST_DOMAIN_0, Some(router_0))
+        .call()
+        .await
+        .unwrap();
+
+    let is_remote_router = instance
+        .methods()
+        // wrong router
+        .is_remote_router(TEST_DOMAIN_0, router_1)
+        .simulate()
+        .await
+        .unwrap()
+        .value;
+    assert!(!is_remote_router);
+
+    let call = instance
+        .methods()
+        .only_remote_router(TEST_DOMAIN_0, router_1)
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "provided router is not enrolled for origin domain"
+    );
+
+    // And now the correct router
+
+    let is_remote_router = instance
+        .methods()
+        .is_remote_router(TEST_DOMAIN_0, router_0)
+        .simulate()
+        .await
+        .unwrap()
+        .value;
+    assert!(is_remote_router);
+
+    let call = instance
+        .methods()
+        .only_remote_router(TEST_DOMAIN_0, router_0)
+        .call()
+        .await;
+    assert!(call.is_ok());
+}
+
+fn get_dispatched_message<D>(call: &FuelCallResponse<D>) -> Option<HyperlaneAgentMessage> {
+    call.receipts
+        .iter()
+        .find(|r| {
+            if let Receipt::LogData { rb, .. } = r {
+                *rb == DISPATCHED_MESSAGE_LOG_ID
+            } else {
+                false
+            }
+        })
+        .map(|r| {
+            if let Receipt::LogData { data, .. } = r {
+                HyperlaneAgentMessage::read_from(&mut data.as_slice()).unwrap()
+            } else {
+                panic!("Expected LogData receipt. Receipt: {:?}", r);
+            }
+        })
 }

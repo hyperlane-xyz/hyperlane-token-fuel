@@ -14,5 +14,6 @@ authors = ["Abacus Works"]
 
 [workspace.dependencies]
 fuels = { git = "https://github.com/FuelLabs/fuels-rs", rev = "f5d08d6" }
+hyperlane-core = { git = "https://github.com/hyperlane-xyz/hyperlane-monorepo", rev = "930cded" }
 test-utils = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "a57ee2a" }
 tokio = { version = "1.12" }

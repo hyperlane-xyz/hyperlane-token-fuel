@@ -5,4 +5,5 @@ license = "Apache-2.0"
 name = "hyperlane-router-test"
 
 [dependencies]
+hyperlane_connection_client = { path = "../../libraries/hyperlane-connection-client" }
 hyperlane_router = { path = "../../libraries/hyperlane-router" }

@@ -1,10 +1,14 @@
 contract;
 
-use std::bytes::Bytes;
+use std::{bytes::Bytes, constants::ZERO_B256};
 
+use hyperlane_connection_client::initialize;
 use hyperlane_router::{*, interface::{HyperlaneRouter, RemoteRouterConfig}, Routers};
 
 abi HyperlaneRouterTest {
+    #[storage(read, write)]
+    fn initialize_hyperlane_connection_client(mailbox: b256, igp: b256);
+
     #[storage(read)]
     fn is_remote_router(domain: u32, router: b256) -> bool;
 
@@ -15,6 +19,7 @@ abi HyperlaneRouterTest {
     fn dispatch(destination_domain: u32, message_body: Bytes) -> b256;
 
     #[storage(read, write)]
+    #[payable]
     fn dispatch_with_gas(destination_domain: u32, message_body: Bytes, gas_amount: u64, gas_payment: u64, gas_payment_refund_address: Identity) -> b256;
 }
 
@@ -40,6 +45,12 @@ impl HyperlaneRouter for Contract {
 }
 
 impl HyperlaneRouterTest for Contract {
+    #[storage(read, write)]
+    fn initialize_hyperlane_connection_client(mailbox: b256, igp: b256) {
+        // Don't care about the module for now
+        initialize(mailbox, igp, ZERO_B256);
+    }
+
     #[storage(read)]
     fn is_remote_router(domain: u32, router: b256) -> bool {
         storage.routers.is_remote_router(domain, router)
@@ -56,6 +67,7 @@ impl HyperlaneRouterTest for Contract {
     }
 
     #[storage(read, write)]
+    #[payable]
     fn dispatch_with_gas(
         destination_domain: u32,
         message_body: Bytes,

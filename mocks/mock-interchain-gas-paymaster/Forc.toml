@@ -5,4 +5,5 @@ license = "Apache-2.0"
 name = "mock-interchain-gas-paymaster"
 
 [dependencies]
-hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+# hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+hyperlane_interfaces = { path = "/Users/trevor/fuel-contracts/contracts/hyperlane-interfaces" }

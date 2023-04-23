@@ -29,9 +29,7 @@ impl TokenRouter {
         metadata: Option<Bytes>,
 ) -> b256 {
         let gas_router: GasRouterStorageKeys = self;
-        let id = gas_router.dispatch_with_gas(destination, EncodedMessage::new(recipient, amount_or_id, metadata).bytes, // Gas payment
- msg_amount(), // Gas payment refund recipient
- msg_sender().unwrap());
+        let id = gas_router.dispatch_with_gas(destination, EncodedMessage::new(recipient, amount_or_id, metadata).bytes, msg_amount(), msg_sender().unwrap());
         log(SentTransferRemoteEvent {
             destination,
             recipient,

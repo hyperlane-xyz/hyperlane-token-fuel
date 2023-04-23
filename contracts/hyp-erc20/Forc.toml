@@ -13,3 +13,4 @@ hyperlane_router = { path = "../../libraries/hyperlane-router" }
 # ownership = { git = "https://github.com/fuellabs/sway-libs", rev = "f6c4cb7" }
 ownership = { path = "/Users/trevor/.forc/git/checkouts/ownership-f6c4cb75510d36fd/f6bb5c234e020d556e1bc688e0f1f368dc9b0f9a/libs/ownership" }
 token_interface = { path = "../../libraries/token-interface" }
+token_router = { path = "../../libraries/token-router" }

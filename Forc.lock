@@ -13,6 +13,7 @@ dependencies = [
     'ownership',
     'std',
     'token_interface',
+    'token_router',
 ]
 
 [[package]]
@@ -141,4 +142,5 @@ dependencies = [
     'hyperlane_gas_router',
     'message',
     'std',
+    'std_lib_extended',
 ]

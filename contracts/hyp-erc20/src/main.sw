@@ -28,7 +28,6 @@ storage {
 }
 
 configurable {
-    // See https://github.com/FuelLabs/rfcs/issues/13
     NAME: str[64] = "HypErc20                                                        ",
     SYMBOL: str[32] = "HYP                             ",
     DECIMALS: u8 = 9u8,

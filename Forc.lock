@@ -89,6 +89,14 @@ dependencies = [
 ]
 
 [[package]]
+name = 'message'
+source = 'member'
+dependencies = [
+    'std',
+    'std_lib_extended',
+]
+
+[[package]]
 name = 'mock-interchain-gas-paymaster'
 source = 'member'
 dependencies = [
@@ -125,3 +133,12 @@ dependencies = ['std']
 name = 'token_interface'
 source = 'member'
 dependencies = ['std']
+
+[[package]]
+name = 'token_router'
+source = 'member'
+dependencies = [
+    'hyperlane_gas_router',
+    'message',
+    'std',
+]

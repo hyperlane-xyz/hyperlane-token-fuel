@@ -1,0 +1,9 @@
+[project]
+authors = ["Trevor Porter"]
+entry = "lib.sw"
+license = "Apache-2.0"
+name = "token_router"
+
+[dependencies]
+hyperlane_gas_router = { path = "../hyperlane-gas-router" }
+message = { path = "../message" }

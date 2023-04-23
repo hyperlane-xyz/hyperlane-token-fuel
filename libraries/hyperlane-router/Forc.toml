@@ -10,4 +10,3 @@ hyperlane_connection_client = { path = "../hyperlane-connection-client" }
 hyperlane_interfaces = { path = "/Users/trevor/fuel-contracts/contracts/hyperlane-interfaces" }
 # std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
 std_lib_extended = { path = "/Users/trevor/fuel-contracts/contracts/std-lib-extended" }
-

@@ -77,17 +77,19 @@ impl From<Message> for EncodedMessage {
 
 #[test()]
 fn test_new_encoded_message() {
-    let message = 0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe;
+    let recipient = 0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe;
     let amount = U256::from((111, 222, 333, 444));
     let metadata = Option::None;
 
     // First with metadata as None
+
     let encoded = EncodedMessage::new(recipient, amount, metadata);
     assert(recipient == encoded.recipient());
     assert(amount == encoded.amount());
     assert(encoded.metadata().is_none());
 
     // Now try with metadata as Some
+
     let mut metadata_bytes = Bytes::new();
     metadata_bytes.push(0x12);
     metadata_bytes.push(0x34);

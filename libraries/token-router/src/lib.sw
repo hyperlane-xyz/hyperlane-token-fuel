@@ -82,3 +82,74 @@ fn convert_decimals(amount: U256, from_decimals: u8, to_decimals: u8) -> U256 {
         return amount;
     }
 }
+
+#[test()]
+fn test_local_amount_to_remote_amount() {
+    let amount = 112233445566;
+
+    // 9 to 18 decimals
+    let local_decimals = 9;
+    let remote_decimals = 18;
+    // Should be the amount * 10^9
+    assert(local_amount_to_remote_amount(amount, local_decimals, remote_decimals) == (U256::from((0, 0, 0, amount)) * U256::from((0, 0, 0, 1000000000))));
+
+    // 9 to 9 decimals
+    let local_decimals = 9;
+    let remote_decimals = 9;
+    // Should be the amount without change
+    assert(local_amount_to_remote_amount(amount, local_decimals, remote_decimals) == U256::from((0, 0, 0, amount)));
+
+    // 9 to 3 decimals
+    let local_decimals = 9;
+    let remote_decimals = 3;
+    // Should be the amount / 10^6, which has a loss of precision
+    assert(local_amount_to_remote_amount(amount, local_decimals, remote_decimals) == U256::from((0, 0, 0, 112233)));
+}
+
+#[test()]
+fn test_remote_amount_to_local_amount() {
+    // Equal to 112233445566778899000000000,
+    // or 112233445.566778899000000000 when 18 decimals
+    let amount = U256::from((0, 0, 0, 112233445566778899)) * U256::from((0, 0, 0, 1000000000));
+    // 18 to 9 decimals
+    let remote_decimals = 18;
+    let local_decimals = 9;
+
+    // Should be the amount / 10^9
+    assert(remote_amount_to_local_amount(amount, remote_decimals, local_decimals) == 112233445566778899);
+
+    // 18 to 6 decimals while we're at it to show a loss of precision
+    let remote_decimals = 18;
+    let local_decimals = 6;
+    // Should be the amount / 10^12
+    assert(remote_amount_to_local_amount(amount, remote_decimals, local_decimals) == 112233445566778);
+
+    // Now with a lower amount that won't overflow on us
+    let amount = U256::from((0, 0, 0, 112233445566));
+
+    // 18 to 18 decimals
+    let remote_decimals = 18;
+    let local_decimals = 18;
+    // Should be the amount without change
+    assert(remote_amount_to_local_amount(amount, remote_decimals, local_decimals) == 112233445566);
+
+    // 18 to 24 decimals
+    let remote_decimals = 18;
+    let local_decimals = 24;
+    // Should be the amount * 10^6
+    assert(remote_amount_to_local_amount(amount, remote_decimals, local_decimals) == 112233445566000000);
+}
+
+#[test(should_revert)]
+fn test_remote_amount_to_local_amount_reverts_on_overflow() {
+    // Equal to 112233445566778899000000000,
+    // or 112233445.566778899000000000 when 18 decimals
+    let amount = U256::from((0, 0, 0, 112233445566778899)) * U256::from((0, 0, 0, 1000000000));
+
+    // 18 to 18 decimals
+    let remote_decimals = 18;
+    let local_decimals = 18;
+    // This should overflow, because amount > std::u64::MAX
+    // And this should revert
+    remote_amount_to_local_amount(amount, remote_decimals, local_decimals);
+}

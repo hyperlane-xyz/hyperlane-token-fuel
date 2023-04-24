@@ -5,7 +5,7 @@ mod interface;
 use core::experimental::storage::*;
 use std::experimental::storage::*;
 
-use std::{bytes::Bytes, logging::log};
+use std::{bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use hyperlane_connection_client::interchain_gas_paymaster;
 use hyperlane_interfaces::igp::InterchainGasPaymaster;
@@ -66,6 +66,22 @@ impl GasRouterStorageKeys {
 }
 
 impl GasRouterStorageKeys {
+    #[storage(read)]
+    pub fn pay_for_gas(
+        self,
+        message_id: b256,
+        destination_domain: u32,
+        gas_payment: u64,
+        gas_payment_refund_address: Identity,
+) {
+        let gas_amount = self.destination_gas(destination_domain);
+        let igp = abi(InterchainGasPaymaster, interchain_gas_paymaster());
+        igp.pay_for_gas {
+            asset_id: BASE_ASSET_ID.value,
+            coins: gas_payment,
+        }(message_id, destination_domain, gas_amount, gas_payment_refund_address);
+    }
+
     /// Quotes the gas payment for a destination domain, using the
     /// configured gas.
     #[storage(read)]

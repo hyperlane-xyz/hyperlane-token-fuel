@@ -3,7 +3,20 @@ contract;
 mod ownable;
 mod hyperlane_connection;
 
-use std::{bytes::Bytes, token::{burn, mint_to}, u256::U256};
+use std::{
+    auth::msg_sender,
+    bytes::Bytes,
+    call_frames::{
+        contract_id,
+        msg_asset_id,
+    },
+    context::msg_amount,
+    token::{
+        burn,
+        mint_to,
+    },
+    u256::U256,
+};
 
 use core::experimental::storage::*;
 use std::experimental::storage::*;
@@ -43,7 +56,7 @@ configurable {
 impl Token for Contract {
     #[storage(read)]
     fn total_supply() -> U256 {
-        storage.total_supply.read()
+        total_supply()
     }
 
     fn decimals() -> u8 {
@@ -62,9 +75,19 @@ impl Token for Contract {
 impl TokenRouter for Contract {
     #[storage(read, write)]
     #[payable]
-    fn transfer_remote(destination: u32, recipient: b256, amount: u64) -> b256 {
-        burn(amount);
+    fn transfer_remote(destination: u32, recipient: b256) -> b256 {
+        require(msg_asset_id() == contract_id(), "msg_asset_id not self");
+        let amount = msg_amount();
+        // Burn the tokens.
+        burn_tokens(amount);
+        // Transfer to the remote.
         token_router_storage_keys().transfer_remote(destination, recipient, local_amount_to_remote_amount(amount, LOCAL_DECIMALS, REMOTE_DECIMALS), Option::None)
+    }
+
+    #[storage(read)]
+    #[payable]
+    fn pay_for_gas(message_id: b256, destination: u32) {
+        token_router_storage_keys().pay_for_gas(message_id, destination, msg_amount(), msg_sender().unwrap());
     }
 }
 
@@ -82,15 +105,14 @@ impl MessageRecipient for Contract {
 
         let message = token_router_storage_keys().handle(origin, sender, message_body);
 
-        // TODO this should work for Address and ContractIds.
-        // Figure out how to determine if the recipient is a contract or not on chain
-
         // Note that transferring an amount of 0 to an Address will cause a panic.
         // We therefore do not attempt minting when the amount is zero.
         let amount = remote_amount_to_local_amount(message.amount, REMOTE_DECIMALS, LOCAL_DECIMALS);
 
         if amount > 0 {
-            mint_to(amount, Identity::Address(Address::from(message.recipient)));
+            // TODO this should work for Address and ContractIds.
+            // Figure out how to determine if the recipient is a contract or not on chain
+            transfer_to(amount, Identity::Address(Address::from(message.recipient)));
         }
     }
 
@@ -111,4 +133,21 @@ fn gas_router_storage_keys() -> GasRouterStorageKeys {
 
 fn token_router_storage_keys() -> TokenRouterStorageKeys {
     gas_router_storage_keys()
+}
+
+#[storage(read, write)]
+fn burn_tokens(amount: u64) {
+    burn(amount);
+    storage.total_supply.write(total_supply() - U256::from((0, 0, 0, amount)));
+}
+
+#[storage(read, write)]
+fn transfer_to(amount: u64, recipient: Identity) {
+    mint_to(amount, recipient);
+    storage.total_supply.write(total_supply() + U256::from((0, 0, 0, amount)));
+}
+
+#[storage(read)]
+fn total_supply() -> U256 {
+    storage.total_supply.try_read().unwrap_or(U256::from((0, 0, 0, 0)))
 }

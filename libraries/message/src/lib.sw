@@ -55,7 +55,7 @@ impl EncodedMessage {
     pub fn metadata(self) -> Option<Bytes> {
         let metadata_len = self.bytes.len() - METADATA_BYTE_OFFSET;
         if metadata_len > 0 {
-            return Option::Some(self.bytes.read_bytes(AMOUNT_BYTE_OFFSET, metadata_len));
+            return Option::Some(self.bytes.read_bytes(METADATA_BYTE_OFFSET, metadata_len));
         }
         Option::None
     }
@@ -73,4 +73,34 @@ impl From<Message> for EncodedMessage {
             metadata: self.metadata(),
         }
     }
+}
+
+#[test()]
+fn test_new_encoded_message() {
+    let message = 0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe;
+    let amount = U256::from((111, 222, 333, 444));
+    let metadata = Option::None;
+
+    // First with metadata as None
+    let encoded = EncodedMessage::new(recipient, amount, metadata);
+    assert(recipient == encoded.recipient());
+    assert(amount == encoded.amount());
+    assert(encoded.metadata().is_none());
+
+    // Now try with metadata as Some
+    let mut metadata_bytes = Bytes::new();
+    metadata_bytes.push(0x12);
+    metadata_bytes.push(0x34);
+    metadata_bytes.push(0x56);
+    metadata_bytes.push(0x78);
+    metadata_bytes.push(0x90);
+
+    let metadata = Option::Some(metadata_bytes);
+
+    let encoded = EncodedMessage::new(recipient, amount, metadata);
+    assert(recipient == encoded.recipient());
+    assert(amount == encoded.amount());
+    assert(encoded.metadata().is_some());
+    assert(metadata_bytes.len() == encoded.metadata().unwrap().len());
+    assert(metadata_bytes.keccak256() == encoded.metadata().unwrap().keccak256());
 }

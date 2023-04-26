@@ -9,6 +9,7 @@ members = [
   "libraries/token-interface",
   "libraries/token-router",
 
+  "tests/hyp-erc20-test",
   "tests/hyperlane-connection-client-test",
   "tests/hyperlane-gas-router-test",
   "tests/hyperlane-router-test",

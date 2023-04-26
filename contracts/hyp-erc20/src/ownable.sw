@@ -1,7 +1,7 @@
 library;
 
 use hyperlane_interfaces::ownable::Ownable;
-use ownership::{data_structures::State, only_owner, owner, set_ownership, transfer_ownership};
+use ownership::{data_structures::State, owner, set_ownership, transfer_ownership};
 
 impl Ownable for Contract {
     #[storage(read)]

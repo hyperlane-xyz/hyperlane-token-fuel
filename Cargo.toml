@@ -1,6 +1,8 @@
 [workspace]
 
 members = [
+    "contracts/hyp-erc20",
+
     "tests/hyperlane-connection-client-test",
     "tests/hyperlane-gas-router-test",
     "tests/hyperlane-router-test",

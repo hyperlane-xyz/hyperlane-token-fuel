@@ -42,13 +42,13 @@ impl HyperlaneConnectionClientGetter for Contract {
     }
 
     #[storage(read)]
-    fn interchain_security_module() -> b256 {
-        interchain_security_module()
+    fn interchain_gas_paymaster() -> b256 {
+        interchain_gas_paymaster()
     }
 
     #[storage(read)]
-    fn interchain_gas_paymaster() -> b256 {
-        interchain_gas_paymaster()
+    fn interchain_security_module_dupe_todo_remove() -> b256 {
+        interchain_security_module()
     }
 }
 

@@ -9,7 +9,7 @@ abi HyperlaneConnectionClientGetter {
     fn interchain_gas_paymaster() -> b256;
 
     #[storage(read)]
-    fn interchain_security_module() -> b256;
+    fn interchain_security_module_dupe_todo_remove() -> b256;
 }
 
 /// Setters for the HyperlaneConnectionClient.

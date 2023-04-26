@@ -17,6 +17,17 @@ dependencies = [
 ]
 
 [[package]]
+name = 'hyp_erc20_test'
+source = 'member'
+dependencies = [
+    'hyperlane_connection_client',
+    'hyperlane_gas_router',
+    'hyperlane_router',
+    'std',
+    'token_router',
+]
+
+[[package]]
 name = 'hyperlane-connection-client-test'
 source = 'member'
 dependencies = [

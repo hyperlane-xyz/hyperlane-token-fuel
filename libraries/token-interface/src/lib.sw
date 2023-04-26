@@ -4,13 +4,9 @@ use std::u256::U256;
 
 use std::call_frames::contract_id;
 
-use std::token::{mint, force_transfer_to_contract, transfer_to_address};
+use std::token::{force_transfer_to_contract, mint, transfer_to_address};
 
-use std::inputs::{
-    input_count,
-    input_type,
-    Input,
-};
+use std::inputs::{Input, input_count, input_type};
 
 // TODO: adapt to changes in this interface.
 // This is still a WIP standard, see https://github.com/FuelLabs/rfcs/issues/13.
@@ -41,7 +37,9 @@ pub fn contract_id_is_input(id: b256) -> bool {
     let count = input_count();
     let mut i = 0;
     while i < count {
-        if input_type(i) == Input::Contract && input_contract_id(i) == id {
+        if input_type(i) == Input::Contract
+            && input_contract_id(i) == id
+        {
             return true;
         }
         i += 1;

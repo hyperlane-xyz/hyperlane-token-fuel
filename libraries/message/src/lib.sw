@@ -82,14 +82,12 @@ fn test_new_encoded_message() {
     let metadata = Option::None;
 
     // First with metadata as None
-
     let encoded = EncodedMessage::new(recipient, amount, metadata);
     assert(recipient == encoded.recipient());
     assert(amount == encoded.amount());
     assert(encoded.metadata().is_none());
 
     // Now try with metadata as Some
-
     let mut metadata_bytes = Bytes::new();
     metadata_bytes.push(0x12);
     metadata_bytes.push(0x34);

@@ -1,5 +1,7 @@
 contract;
 
+
+
 // mod ownable;
 // mod hyperlane_connection;
 
@@ -12,7 +14,10 @@ use std::{
         contract_id,
         msg_asset_id,
     },
-    context::msg_amount,
+    context::{
+        msg_amount,
+        this_balance,
+    },
     token::{
         burn,
         mint,
@@ -24,7 +29,12 @@ use std::{
 use core::experimental::storage::*;
 use std::experimental::storage::*;
 
-use hyperlane_interfaces::{igp::InterchainGasPaymaster, Mailbox, MessageRecipient, ownable::Ownable};
+use hyperlane_interfaces::{
+    igp::InterchainGasPaymaster,
+    Mailbox,
+    MessageRecipient,
+    ownable::Ownable,
+};
 
 use hyperlane_connection_client::{
     initialize as initialize_hyperlane_connection_client,
@@ -41,31 +51,12 @@ use hyperlane_connection_client::{
     set_mailbox,
 };
 
-use hyperlane_router::{
-    Routers,
-    interface::{
-        RemoteRouterConfig,
-        HyperlaneRouter,
-    }
-};
-use hyperlane_gas_router::{
-    GasRouterStorageKeys,
-    interface::{
-        GasRouterConfig,
-        HyperlaneGasRouter,
-    },
-};
+use hyperlane_router::{interface::{HyperlaneRouter, RemoteRouterConfig}, Routers};
+use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};
 
-use ownership::{
-    only_owner,
-    set_ownership,
-    data_structures::State, owner, transfer_ownership,
-};
+use ownership::{data_structures::State, only_owner, owner, set_ownership, transfer_ownership};
 
-use token_interface::{
-    Token,
-    transfer_to_id,
-};
+use token_interface::{Token, transfer_to_id};
 use token_router::{
     interface::TokenRouter,
     local_amount_to_remote_amount,
@@ -88,13 +79,7 @@ configurable {
 
 abi HypERC20 {
     #[storage(read, write)]
-    fn initialize(
-        initial_owner: Identity,
-        mailbox_id: b256,
-        interchain_gas_paymaster_id: b256,
-        interchain_security_module_id: b256,
-        total_supply: u64,
-    );
+    fn initialize(initial_owner: Identity, mailbox_id: b256, interchain_gas_paymaster_id: b256, interchain_security_module_id: b256, total_supply: u64);
 }
 
 impl HypERC20 for Contract {
@@ -109,7 +94,9 @@ impl HypERC20 for Contract {
         // This will revert if called twice, even if the sender is the owner.
         set_ownership(initial_owner);
         initialize_hyperlane_connection_client(mailbox_id, interchain_gas_paymaster_id, interchain_security_module_id);
-        mint_token(total_supply);
+        if total_supply > 0 {
+            mint_to_identity(total_supply, initial_owner);
+        }
     }
 }
 
@@ -137,13 +124,16 @@ impl TokenRouter for Contract {
     #[payable]
     fn transfer_remote(destination: u32, recipient: b256) -> b256 {
         require(msg_asset_id() == contract_id(), "msg_asset_id not self");
-        // let amount = msg_amount();
-        // // Burn the tokens.
-        // burn_tokens(amount);
-        // // Transfer to the remote.
-        // token_router_storage_keys().transfer_remote(destination, recipient, local_amount_to_remote_amount(amount, LOCAL_DECIMALS, REMOTE_DECIMALS), Option::None)
-    
-        std::constants::ZERO_B256
+        let amount = msg_amount();
+
+        log(696969);
+        require(this_balance(contract_id()) == 10000000000, this_balance(contract_id()));
+        log(69420);
+        // Burn the tokens.
+        burn_tokens(amount);
+        log(6942069);
+        // Transfer to the remote.
+        token_router_storage_keys().transfer_remote(destination, recipient, local_amount_to_remote_amount(amount, LOCAL_DECIMALS, REMOTE_DECIMALS), Option::None)
     }
 
     #[storage(read)]
@@ -271,7 +261,6 @@ impl HyperlaneConnectionClientSetter for Contract {
     }
 }
 
-
 // Ownable
 
 impl Ownable for Contract {
@@ -290,7 +279,6 @@ impl Ownable for Contract {
         set_ownership(new_owner)
     }
 }
-
 
 // Router
 
@@ -332,4 +320,3 @@ impl HyperlaneGasRouter for Contract {
         gas_router_storage_keys().destination_gas(domain)
     }
 }
-

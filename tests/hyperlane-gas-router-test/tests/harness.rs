@@ -54,9 +54,12 @@ async fn get_contract_instance() -> (HyperlaneGasRouterTest<WalletUnlocked>, Con
 
     let id = Contract::load_from(
         "./out/debug/hyperlane-gas-router-test.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "./out/debug/hyperlane-gas-router-test-storage_slots.json",
-        ).unwrap()),
+        LoadConfiguration::default().set_storage_configuration(
+            StorageConfiguration::load_from(
+                "./out/debug/hyperlane-gas-router-test-storage_slots.json",
+            )
+            .unwrap(),
+        ),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -79,9 +82,14 @@ async fn get_mailbox_and_igp(
 
     let mailbox_id = Contract::load_from(
         "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
-        ).unwrap()).set_configurables(mailbox_configurables),
+        LoadConfiguration::default()
+            .set_storage_configuration(
+                StorageConfiguration::load_from(
+                    "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
+                )
+                .unwrap(),
+            )
+            .set_configurables(mailbox_configurables),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -193,7 +201,9 @@ async fn test_destination_gas_configs() {
         .unwrap();
 
     // Confirm the events were logged
-    let events = call.decode_logs_with_type::<DestinationGasSetEvent>().unwrap();
+    let events = call
+        .decode_logs_with_type::<DestinationGasSetEvent>()
+        .unwrap();
     assert_eq!(
         events,
         configs

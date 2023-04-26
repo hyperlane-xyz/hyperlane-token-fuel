@@ -6,6 +6,6 @@ name = "hyp_erc20_test"
 
 [dependencies]
 hyperlane_connection_client = { path = "../../libraries/hyperlane-connection-client" }
-hyperlane_router = { path = "../../libraries/hyperlane-router" }
 hyperlane_gas_router = { path = "../../libraries/hyperlane-gas-router" }
+hyperlane_router = { path = "../../libraries/hyperlane-router" }
 token_router = { path = "../../libraries/token-router" }

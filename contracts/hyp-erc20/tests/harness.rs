@@ -1,9 +1,13 @@
 use std::str::FromStr;
 
-use fuels::{prelude::*, tx::ContractId, types::{Bits256, Identity}};
+use fuels::{
+    prelude::*,
+    tx::ContractId,
+    types::{Bits256, Identity},
+};
 
 use hyperlane_core::{HyperlaneMessage as HyperlaneAgentMessage, H256, U256 as HyperlaneU256};
-use test_utils::{get_revert_reason, get_dispatched_message};
+use test_utils::{get_dispatched_message, get_revert_reason};
 
 // Load abi from json
 abigen!(Contract(
@@ -27,13 +31,14 @@ mod igp_contract {
     ));
 }
 
-use igp_contract::{MockInterchainGasPaymaster};
+use igp_contract::MockInterchainGasPaymaster;
 use mailbox_contract::MockMailbox;
 
 const LOCAL_DOMAIN: u32 = 0x6675656cu32;
 
 const TEST_REMOTE_DOMAIN: u32 = 11111;
-const TEST_REMOTE_ROUTER: &str = "0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe";
+const TEST_REMOTE_ROUTER: &str =
+    "0xcafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe";
 const TEST_REMOTE_GAS_AMOUNT: u64 = 150000;
 
 async fn get_contract_instance() -> (HypERC20<WalletUnlocked>, ContractId) {
@@ -52,9 +57,9 @@ async fn get_contract_instance() -> (HypERC20<WalletUnlocked>, ContractId) {
 
     let id = Contract::load_from(
         "./out/debug/hyp-erc20.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "./out/debug/hyp-erc20-storage_slots.json"
-        ).unwrap()),
+        LoadConfiguration::default().set_storage_configuration(
+            StorageConfiguration::load_from("./out/debug/hyp-erc20-storage_slots.json").unwrap(),
+        ),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -77,9 +82,14 @@ async fn get_mailbox_and_igp(
 
     let mailbox_id = Contract::load_from(
         "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
-        ).unwrap()).set_configurables(mailbox_configurables),
+        LoadConfiguration::default()
+            .set_storage_configuration(
+                StorageConfiguration::load_from(
+                    "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
+                )
+                .unwrap(),
+            )
+            .set_configurables(mailbox_configurables),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -127,13 +137,19 @@ async fn initialize_and_enroll_remote_router(
             ism_id,
             initial_total_supply,
         )
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
         .call()
         .await
         .unwrap();
 
     instance
         .methods()
-        .enroll_remote_router(TEST_REMOTE_DOMAIN, Some(Bits256::from_hex_str(TEST_REMOTE_ROUTER).unwrap()))
+        .enroll_remote_router(
+            TEST_REMOTE_DOMAIN,
+            Some(Bits256::from_hex_str(TEST_REMOTE_ROUTER).unwrap()),
+        )
         .call()
         .await
         .unwrap();
@@ -151,24 +167,31 @@ async fn initialize_and_enroll_remote_router(
     (mailbox, igp)
 }
 
-fn get_message_body(recipient: Bits256, amount: HyperlaneU256, metadata: Option<Vec<u8>>) -> Vec<u8> {
+fn get_message_body(
+    recipient: Bits256,
+    amount: HyperlaneU256,
+    metadata: Option<Vec<u8>>,
+) -> Vec<u8> {
     let mut amount_bytes: [u8; 32] = [0; 32];
-    amount.to_little_endian(&mut amount_bytes);
+    amount.to_big_endian(&mut amount_bytes);
     [
         &recipient.0,
         &amount_bytes,
         metadata.unwrap_or_default().as_slice(),
-    ].concat()
+    ]
+    .concat()
 }
 
 // ============== initialize ==============
 
 #[tokio::test]
 async fn test_initialize() {
-    let (instance, _id) = get_contract_instance().await;
+    let (instance, instance_id) = get_contract_instance().await;
     let (mailbox, igp) = get_mailbox_and_igp(instance.account().clone()).await;
 
-    let owner = Identity::Address(instance.account().address().into());
+    let owner_wallet = instance.account();
+    let owner_address = owner_wallet.address();
+    let owner = Identity::Address(owner_address.into());
     let mailbox_id = Bits256(mailbox.id().hash().into());
     let igp_id = Bits256(igp.id().hash().into());
     let ism_id = Bits256([1u8; 32]);
@@ -183,6 +206,9 @@ async fn test_initialize() {
             ism_id,
             initial_total_supply,
         )
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
         .call()
         .await
         .unwrap();
@@ -193,16 +219,50 @@ async fn test_initialize() {
     let on_chain_mailbox = instance.methods().mailbox().simulate().await.unwrap().value;
     assert_eq!(on_chain_mailbox, mailbox_id);
 
-    let on_chain_igp = instance.methods().interchain_gas_paymaster().simulate().await.unwrap().value;
+    let on_chain_igp = instance
+        .methods()
+        .interchain_gas_paymaster()
+        .simulate()
+        .await
+        .unwrap()
+        .value;
     assert_eq!(on_chain_igp, igp_id);
 
-    let on_chain_ism = instance.methods().interchain_security_module().simulate().await.unwrap().value;
+    let on_chain_ism = instance
+        .methods()
+        .interchain_security_module()
+        .simulate()
+        .await
+        .unwrap()
+        .value;
     assert_eq!(on_chain_ism, ContractId::from(ism_id.0));
 
-    let total_supply = instance.methods().total_supply().simulate().await.unwrap().value;
-    assert_eq!(total_supply, U256 {
-        a: 0, b: 0, c: 0, d: initial_total_supply
-    });
+    let total_supply = instance
+        .methods()
+        .total_supply()
+        .simulate()
+        .await
+        .unwrap()
+        .value;
+    assert_eq!(
+        total_supply,
+        U256 {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: initial_total_supply
+        }
+    );
+
+    // Minted to the owner
+    let owner_balance = instance
+        .account()
+        .provider()
+        .unwrap()
+        .get_asset_balance(owner_address, AssetId::new(instance_id.into()))
+        .await
+        .unwrap();
+    assert_eq!(owner_balance, initial_total_supply);
 }
 
 #[tokio::test]
@@ -223,8 +283,11 @@ async fn test_initialize_reverts_when_called_twice() {
             mailbox_id,
             igp_id,
             ism_id,
-            initial_total_supply
+            initial_total_supply,
         )
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
         .call()
         .await
         .unwrap();
@@ -238,6 +301,8 @@ async fn test_initialize_reverts_when_called_twice() {
             ism_id,
             initial_total_supply,
         )
+        // An output for the initial total supply transfer
+        .append_variable_outputs(1)
         .call()
         .await;
     assert!(call.is_err());
@@ -263,10 +328,7 @@ async fn test_transfer_remote() {
 
     let call = instance
         .methods()
-        .transfer_remote(
-            TEST_REMOTE_DOMAIN,
-            recipient,
-        )
+        .transfer_remote(TEST_REMOTE_DOMAIN, recipient)
         .call_params(
             CallParameters::default()
                 .set_asset_id(AssetId::new(instance_id.into()))
@@ -280,7 +342,8 @@ async fn test_transfer_remote() {
         .await
         .unwrap();
 
-    let message_amount = HyperlaneU256::from(transfer_amount) * (HyperlaneU256::from(10).pow(9.into()));
+    let message_amount =
+        HyperlaneU256::from(transfer_amount) * (HyperlaneU256::from(10).pow(9.into()));
     let message = get_dispatched_message(&call).expect("no message found");
     assert_eq!(
         message.id(),
@@ -292,6 +355,7 @@ async fn test_transfer_remote() {
             destination: TEST_REMOTE_DOMAIN,
             recipient: H256::from_str(TEST_REMOTE_ROUTER).unwrap(),
             body: get_message_body(recipient, message_amount, None),
-        }.id()
+        }
+        .id()
     )
 }

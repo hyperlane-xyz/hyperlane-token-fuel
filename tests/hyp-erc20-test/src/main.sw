@@ -34,7 +34,5 @@ impl TokenRouter for Contract {
 
     #[storage(read)]
     #[payable]
-    fn pay_for_gas(message_id: b256, destination: u32) {
-
-    }
+    fn pay_for_gas(message_id: b256, destination: u32) {}
 }

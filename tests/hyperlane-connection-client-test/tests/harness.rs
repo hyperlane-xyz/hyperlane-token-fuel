@@ -37,9 +37,12 @@ async fn get_contract_instance() -> (HyperlaneConnectionClientTest<WalletUnlocke
 
     let id = Contract::load_from(
         "./out/debug/hyperlane-connection-client-test.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "./out/debug/hyperlane-connection-client-test-storage_slots.json",
-        ).unwrap()),
+        LoadConfiguration::default().set_storage_configuration(
+            StorageConfiguration::load_from(
+                "./out/debug/hyperlane-connection-client-test-storage_slots.json",
+            )
+            .unwrap(),
+        ),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -262,7 +265,9 @@ async fn test_interchain_security_module_reverts_if_not_set() {
     let (instance, _id) = get_contract_instance().await;
 
     test_reverts(
-        instance.methods().interchain_security_module_dupe_todo_remove(),
+        instance
+            .methods()
+            .interchain_security_module_dupe_todo_remove(),
         "ISM not set",
     )
     .await;
@@ -276,7 +281,9 @@ async fn test_set_interchain_security_module() {
 
     test_setter(
         instance.methods().set_interchain_security_module(ism),
-        instance.methods().interchain_security_module_dupe_todo_remove(),
+        instance
+            .methods()
+            .interchain_security_module_dupe_todo_remove(),
         ism,
         InterchainSecurityModuleSetEvent { module: ism },
     )

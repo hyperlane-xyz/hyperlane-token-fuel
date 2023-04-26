@@ -56,9 +56,10 @@ async fn get_contract_instance() -> (HyperlaneRouterTest<WalletUnlocked>, Contra
 
     let id = Contract::load_from(
         "./out/debug/hyperlane-router-test.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "./out/debug/hyperlane-router-test-storage_slots.json",
-        ).unwrap()),
+        LoadConfiguration::default().set_storage_configuration(
+            StorageConfiguration::load_from("./out/debug/hyperlane-router-test-storage_slots.json")
+                .unwrap(),
+        ),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())
@@ -81,9 +82,14 @@ async fn get_mailbox_and_igp(
 
     let mailbox_id = Contract::load_from(
         "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
-        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
-            "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
-        ).unwrap()).set_configurables(mailbox_configurables),
+        LoadConfiguration::default()
+            .set_storage_configuration(
+                StorageConfiguration::load_from(
+                    "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
+                )
+                .unwrap(),
+            )
+            .set_configurables(mailbox_configurables),
     )
     .unwrap()
     .deploy(&wallet, TxParameters::default())

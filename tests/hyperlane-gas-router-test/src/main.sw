@@ -5,13 +5,9 @@ use std::{bytes::Bytes, constants::ZERO_B256, experimental::storage::*};
 
 use std::call_frames::contract_id;
 
-use std::token::{mint, force_transfer_to_contract, transfer_to_address};
+use std::token::{force_transfer_to_contract, mint, transfer_to_address};
 
-use std::inputs::{
-    input_count,
-    input_type,
-    Input,
-};
+use std::inputs::{Input, input_count, input_type};
 
 impl StorageKey<b256> {
     #[storage(read, write)]
@@ -61,13 +57,14 @@ impl HyperlaneGasRouterTest for Contract {
 
     #[storage(read, write)]
     fn code_size(id: b256) -> bool {
+
         // asm(code_size, id: id) {
         //     csiz code_size id;
         //     code_size: u64
         // }
-
         mint(1000);
         transfer_regardless(1000, id);
+
         // force_transfer_to_contract(1000, contract_id(), ContractId::from(id));
 
         // if contract_id_is_input(id) {
@@ -141,7 +138,9 @@ pub fn contract_id_is_input(id: b256) -> bool {
     let count = input_count();
     let mut i = 0;
     while i < count {
-        if input_type(i) == Input::Contract && input_contract_id(i) == id {
+        if input_type(i) == Input::Contract
+            && input_contract_id(i) == id
+        {
             return true;
         }
         i += 1;

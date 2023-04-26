@@ -35,11 +35,14 @@ async fn get_contract_instance() -> (HyperlaneConnectionClientTest<WalletUnlocke
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
+    let id = Contract::load_from(
         "./out/debug/hyperlane-connection-client-test.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "./out/debug/hyperlane-connection-client-test-storage_slots.json",
+        ).unwrap()),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
@@ -84,7 +87,7 @@ async fn test_setter<
 ) {
     let call = setter_handler.call().await.unwrap();
 
-    let events = call.get_logs_with_type::<Event>().unwrap();
+    let events = call.decode_logs_with_type::<Event>().unwrap();
     assert_eq!(events, vec![expected_event],);
 
     let value = getter_handler.simulate().await.unwrap().value;
@@ -122,7 +125,7 @@ async fn test_initialize() {
 
     let value = instance
         .methods()
-        .interchain_security_module()
+        .interchain_security_module_dupe_todo_remove()
         .simulate()
         .await
         .unwrap()
@@ -259,7 +262,7 @@ async fn test_interchain_security_module_reverts_if_not_set() {
     let (instance, _id) = get_contract_instance().await;
 
     test_reverts(
-        instance.methods().interchain_security_module(),
+        instance.methods().interchain_security_module_dupe_todo_remove(),
         "ISM not set",
     )
     .await;
@@ -273,7 +276,7 @@ async fn test_set_interchain_security_module() {
 
     test_setter(
         instance.methods().set_interchain_security_module(ism),
-        instance.methods().interchain_security_module(),
+        instance.methods().interchain_security_module_dupe_todo_remove(),
         ism,
         InterchainSecurityModuleSetEvent { module: ism },
     )

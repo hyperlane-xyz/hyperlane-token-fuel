@@ -2246,8 +2246,8 @@ dependencies = [
 
 [[package]]
 name = "fuels"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "fuel-core",
  "fuel-core-client",
@@ -2262,8 +2262,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-accounts"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "async-trait",
  "bytes 1.4.0",
@@ -2289,8 +2289,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-code-gen"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
@@ -2305,8 +2305,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-core"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "fuel-tx",
  "fuel-types",
@@ -2319,8 +2319,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-macros"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
@@ -2337,8 +2337,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-programs"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "async-trait",
  "bytes 1.4.0",
@@ -2366,8 +2366,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-test-helpers"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "fuel-core",
  "fuel-core-chain-config",
@@ -2392,8 +2392,8 @@ dependencies = [
 
 [[package]]
 name = "fuels-types"
-version = "0.39.0"
-source = "git+https://github.com/FuelLabs/fuels-rs?rev=f5d08d6#f5d08d67543ee35fedc561c5c8335bb134ec24fd"
+version = "0.41.0"
+source = "git+https://github.com/FuelLabs/fuels-rs?tag=v0.41.0#adb4c9be1f1ff7c1e4cd32871458858afdca1f37"
 dependencies = [
  "bech32 0.9.1",
  "chrono",
@@ -5263,7 +5263,6 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/hyperlane-xyz/fuel-contracts?rev=71e6d37#71e6d378896350da04789ce003c3ad70ba3258a4"
 dependencies = [
  "ethers",
  "fuels",

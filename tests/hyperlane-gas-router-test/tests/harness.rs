@@ -52,11 +52,14 @@ async fn get_contract_instance() -> (HyperlaneGasRouterTest<WalletUnlocked>, Con
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
+    let id = Contract::load_from(
         "./out/debug/hyperlane-gas-router-test.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "./out/debug/hyperlane-gas-router-test-storage_slots.json",
+        ).unwrap()),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
@@ -73,21 +76,28 @@ async fn get_mailbox_and_igp(
 ) {
     let mailbox_configurables =
         mailbox_contract::MockMailboxConfigurables::new().set_LOCAL_DOMAIN(LOCAL_DOMAIN);
-    let mailbox_id = Contract::deploy(
+
+    let mailbox_id = Contract::load_from(
         "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
-        &wallet,
-        DeployConfiguration::default().set_configurables(mailbox_configurables),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
+        ).unwrap()).set_configurables(mailbox_configurables),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
     let mailbox = MockMailbox::new(mailbox_id.clone(), wallet.clone());
 
-    let igp_id = Contract::deploy(
+    let igp_id = Contract::load_from(
         "../../mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "../../mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster-storage_slots.json",
+        ).unwrap()),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
@@ -183,7 +193,7 @@ async fn test_destination_gas_configs() {
         .unwrap();
 
     // Confirm the events were logged
-    let events = call.get_logs_with_type::<DestinationGasSetEvent>().unwrap();
+    let events = call.decode_logs_with_type::<DestinationGasSetEvent>().unwrap();
     assert_eq!(
         events,
         configs
@@ -269,7 +279,7 @@ async fn test_dispatch_with_gas() {
     // And ensure that interchain gas is paid for
     let events = igp
         .log_decoder()
-        .get_logs_with_type::<PayForGasCalled>(&call.receipts)
+        .decode_logs_with_type::<PayForGasCalled>(&call.receipts)
         .unwrap();
     assert_eq!(
         events,
@@ -307,7 +317,7 @@ async fn test_quote_gas_payment() {
         .unwrap();
     let events = igp
         .log_decoder()
-        .get_logs_with_type::<QuoteGasPaymentCalled>(&call.receipts)
+        .decode_logs_with_type::<QuoteGasPaymentCalled>(&call.receipts)
         .unwrap();
     assert_eq!(
         events,

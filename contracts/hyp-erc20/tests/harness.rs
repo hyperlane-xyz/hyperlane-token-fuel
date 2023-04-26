@@ -27,7 +27,7 @@ mod igp_contract {
     ));
 }
 
-use igp_contract::{MockInterchainGasPaymaster, PayForGasCalled, QuoteGasPaymentCalled};
+use igp_contract::{MockInterchainGasPaymaster};
 use mailbox_contract::MockMailbox;
 
 const LOCAL_DOMAIN: u32 = 0x6675656cu32;
@@ -50,11 +50,14 @@ async fn get_contract_instance() -> (HypERC20<WalletUnlocked>, ContractId) {
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
+    let id = Contract::load_from(
         "./out/debug/hyp-erc20.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "./out/debug/hyp-erc20-storage_slots.json"
+        ).unwrap()),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
@@ -71,21 +74,28 @@ async fn get_mailbox_and_igp(
 ) {
     let mailbox_configurables =
         mailbox_contract::MockMailboxConfigurables::new().set_LOCAL_DOMAIN(LOCAL_DOMAIN);
-    let mailbox_id = Contract::deploy(
+
+    let mailbox_id = Contract::load_from(
         "../../mocks/mock-mailbox/out/debug/mock-mailbox.bin",
-        &wallet,
-        DeployConfiguration::default().set_configurables(mailbox_configurables),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "../../mocks/mock-mailbox/out/debug/mock-mailbox-storage_slots.json",
+        ).unwrap()).set_configurables(mailbox_configurables),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
     let mailbox = MockMailbox::new(mailbox_id.clone(), wallet.clone());
 
-    let igp_id = Contract::deploy(
+    let igp_id = Contract::load_from(
         "../../mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(StorageConfiguration::load_from(
+            "../../mocks/mock-interchain-gas-paymaster/out/debug/mock-interchain-gas-paymaster-storage_slots.json",
+        ).unwrap()),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 

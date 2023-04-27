@@ -2,12 +2,15 @@ use std::str::FromStr;
 
 use fuels::{
     prelude::*,
+    programs::call_response::FuelCallResponse,
     tx::ContractId,
-    types::{Bits256, Identity}, programs::call_response::FuelCallResponse,
+    types::{Bits256, Identity},
 };
 
-use hyperlane_core::{Encode, HyperlaneMessage as HyperlaneAgentMessage, H256, U256 as HyperlaneU256};
-use test_utils::{get_dispatched_message, get_revert_reason, bits256_to_h256, get_revert_string};
+use hyperlane_core::{
+    Encode, HyperlaneMessage as HyperlaneAgentMessage, H256, U256 as HyperlaneU256,
+};
+use test_utils::{bits256_to_h256, get_dispatched_message, get_revert_reason, get_revert_string};
 
 // Load abi from json
 abigen!(Contract(
@@ -326,18 +329,17 @@ async fn test_transfer_remote() {
     let transfer_amount: u64 = 10000000000;
     let recipient = Bits256([12u8; 32]);
 
-    let total_supply_before = sway_u256_to_hyperlane_u256(instance
-        .methods()
-        .total_supply()
-        .simulate()
-        .await
-        .unwrap()
-        .value);
-    // Sanity check the total supply
-    assert_eq!(
-        total_supply_before,
-        total_supply.into(),
+    let total_supply_before = sway_u256_to_hyperlane_u256(
+        instance
+            .methods()
+            .total_supply()
+            .simulate()
+            .await
+            .unwrap()
+            .value,
     );
+    // Sanity check the total supply
+    assert_eq!(total_supply_before, total_supply.into(),);
 
     let call = instance
         .methods()
@@ -376,26 +378,28 @@ async fn test_transfer_remote() {
     assert_eq!(message.id(), bits256_to_h256(call.value));
 
     // Ensure that the event was logged
-    let events = call.decode_logs_with_type::<SentTransferRemoteEvent>().unwrap();
+    let events = call
+        .decode_logs_with_type::<SentTransferRemoteEvent>()
+        .unwrap();
     assert_eq!(
         events,
-        vec![
-            SentTransferRemoteEvent {
-                destination: TEST_REMOTE_DOMAIN,
-                recipient,
-                amount: hyperlane_u256_to_sway_u256(message_amount),
-            }
-        ]
+        vec![SentTransferRemoteEvent {
+            destination: TEST_REMOTE_DOMAIN,
+            recipient,
+            amount: hyperlane_u256_to_sway_u256(message_amount),
+        }]
     );
 
     // Check that the tokens were burned
-    let total_supply_after = sway_u256_to_hyperlane_u256(instance
-        .methods()
-        .total_supply()
-        .simulate()
-        .await
-        .unwrap()
-        .value);
+    let total_supply_after = sway_u256_to_hyperlane_u256(
+        instance
+            .methods()
+            .total_supply()
+            .simulate()
+            .await
+            .unwrap()
+            .value,
+    );
     assert_eq!(
         total_supply_before - total_supply_after,
         transfer_amount.into(),
@@ -440,14 +444,14 @@ async fn test_handle() {
     // 10 * 1e9, or 10 "full" tokens
     let transfer_amount: u64 = 10000000000;
     let message_amount =
-    HyperlaneU256::from(transfer_amount) * (HyperlaneU256::from(10).pow(9.into()));
+        HyperlaneU256::from(transfer_amount) * (HyperlaneU256::from(10).pow(9.into()));
 
     // Vec<(recipient, is_contract)>
     let transfer_recipients = vec![
         (Bits256([12; 32]), false), // An address
-        // TODO: support contracts
+                                    // TODO: support contracts
 
-        // (Bits256(igp.id().hash().into()), true), // A contract
+                                    // (Bits256(igp.id().hash().into()), true), // A contract
     ];
 
     for (transfer_recipient, is_contract) in transfer_recipients {
@@ -461,7 +465,7 @@ async fn test_handle() {
             body: get_message_body(transfer_recipient, message_amount, None),
         };
         let encoded_message = message.to_vec();
-    
+
         let call = mailbox
             .methods()
             .process(Bytes(vec![]), Bytes(encoded_message))
@@ -473,34 +477,34 @@ async fn test_handle() {
             .unwrap();
 
         // Event was logged
-        let events = instance.log_decoder().decode_logs_with_type::<ReceivedTransferRemoteEvent>(&call.receipts).unwrap();
+        let events = instance
+            .log_decoder()
+            .decode_logs_with_type::<ReceivedTransferRemoteEvent>(&call.receipts)
+            .unwrap();
         assert_eq!(
             events,
-            vec![
-                ReceivedTransferRemoteEvent {
-                    origin: TEST_REMOTE_DOMAIN,
-                    recipient: transfer_recipient,
-                    amount: hyperlane_u256_to_sway_u256(message_amount),
-                }
-            ]
+            vec![ReceivedTransferRemoteEvent {
+                origin: TEST_REMOTE_DOMAIN,
+                recipient: transfer_recipient,
+                amount: hyperlane_u256_to_sway_u256(message_amount),
+            }]
         );
-    
+
         // Check that the tokens were minted, increasing the total supply
 
         // Increase the total supply in our test accounting
         total_supply += transfer_amount;
         // Get the on-chain value
-        let new_total_supply = sway_u256_to_hyperlane_u256(instance
-            .methods()
-            .total_supply()
-            .simulate()
-            .await
-            .unwrap()
-            .value);
-        assert_eq!(
-            new_total_supply,
-            total_supply.into()
+        let new_total_supply = sway_u256_to_hyperlane_u256(
+            instance
+                .methods()
+                .total_supply()
+                .simulate()
+                .await
+                .unwrap()
+                .value,
         );
+        assert_eq!(new_total_supply, total_supply.into());
 
         // And that they were minted to the correct recipient
         let balance = if is_contract {
@@ -508,7 +512,10 @@ async fn test_handle() {
                 .account()
                 .provider()
                 .unwrap()
-                .get_contract_asset_balance(&ContractId::new(transfer_recipient.0).into(), AssetId::new(instance_id.into()))
+                .get_contract_asset_balance(
+                    &ContractId::new(transfer_recipient.0).into(),
+                    AssetId::new(instance_id.into()),
+                )
                 .await
                 .unwrap()
         } else {
@@ -516,7 +523,10 @@ async fn test_handle() {
                 .account()
                 .provider()
                 .unwrap()
-                .get_asset_balance(&Address::new(transfer_recipient.0).into(), AssetId::new(instance_id.into()))
+                .get_asset_balance(
+                    &Address::new(transfer_recipient.0).into(),
+                    AssetId::new(instance_id.into()),
+                )
                 .await
                 .unwrap()
         };
@@ -593,11 +603,7 @@ async fn test_hyperlane_connection_client_setters_revert_if_caller_not_owner() {
         .unwrap();
 
     // set_mailbox
-    let call = instance
-        .methods()
-        .set_mailbox(dummy_bits256)
-        .call()
-        .await;
+    let call = instance.methods().set_mailbox(dummy_bits256).call().await;
     assert_not_owner_revert(call);
 
     // set_interchain_gas_paymaster
@@ -646,12 +652,10 @@ async fn test_hyperlane_router_enrolling_reverts_if_sender_not_owner() {
     // enroll_remote_routers
     let call = instance
         .methods()
-        .enroll_remote_routers(vec![
-            RemoteRouterConfig {
-                domain: dummy_domain,
-                router: Some(dummy_bits256),
-            },
-        ])
+        .enroll_remote_routers(vec![RemoteRouterConfig {
+            domain: dummy_domain,
+            router: Some(dummy_bits256),
+        }])
         .call()
         .await;
     assert_not_owner_revert(call);
@@ -678,12 +682,10 @@ async fn test_hyperlane_gas_router_setting_reverts_if_sender_not_owner() {
     // set_destination_gas_configs
     let call = instance
         .methods()
-        .set_destination_gas_configs(vec![
-            GasRouterConfig {
-                domain: dummy_domain,
-                gas: dummy_gas,
-            },
-        ])
+        .set_destination_gas_configs(vec![GasRouterConfig {
+            domain: dummy_domain,
+            gas: dummy_gas,
+        }])
         .call()
         .await;
     assert_not_owner_revert(call);
@@ -706,8 +708,5 @@ fn sway_u256_to_hyperlane_u256(sway_u256: U256) -> HyperlaneU256 {
 
 fn assert_not_owner_revert<D>(call: Result<FuelCallResponse<D>>) {
     assert!(call.is_err());
-    assert_eq!(
-        get_revert_reason(call.err().unwrap()),
-        "NotOwner",
-    );
+    assert_eq!(get_revert_reason(call.err().unwrap()), "NotOwner",);
 }

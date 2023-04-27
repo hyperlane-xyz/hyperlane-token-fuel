@@ -57,13 +57,13 @@ impl HyperlaneGasRouterTest for Contract {
 
     #[storage(read, write)]
     fn code_size(id: b256) -> bool {
-
         // asm(code_size, id: id) {
         //     csiz code_size id;
         //     code_size: u64
         // }
         mint(1000);
         transfer_regardless(1000, id);
+
 
         // force_transfer_to_contract(1000, contract_id(), ContractId::from(id));
 

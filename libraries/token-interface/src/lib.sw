@@ -26,7 +26,11 @@ abi Token {
 pub fn transfer_to_id(amount: u64, id: b256) {
     if contract_id_is_input(id) {
         force_transfer_to_contract(amount, contract_id(), ContractId::from(id));
+        log(696969);
+        log(std::context::balance_of(contract_id(), ContractId::from(id)));
+        require(std::context::balance_of(contract_id(), ContractId::from(id)) == amount, "mint_to_id failed");
     } else {
+        log(42069);
         transfer_to_address(amount, contract_id(), Address::from(id));
     }
 }

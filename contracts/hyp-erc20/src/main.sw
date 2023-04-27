@@ -1,11 +1,6 @@
 contract;
 
-
-
-// mod ownable;
-// mod hyperlane_connection;
-
-// use ownable::*;
+mod interface;
 
 use std::{
     auth::msg_sender,
@@ -56,13 +51,15 @@ use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, Hy
 
 use ownership::{data_structures::State, only_owner, owner, set_ownership, transfer_ownership};
 
-use token_interface::{Token, transfer_to_id};
+use token_interface::Token;
 use token_router::{
     interface::TokenRouter,
     local_amount_to_remote_amount,
     remote_amount_to_local_amount,
     TokenRouterStorageKeys,
 };
+
+use interface::HypERC20;
 
 storage {
     total_supply: U256 = U256::from((0, 0, 0, 0)),
@@ -75,11 +72,6 @@ configurable {
     SYMBOL: str[32] = "HYP                             ",
     LOCAL_DECIMALS: u8 = 9u8,
     REMOTE_DECIMALS: u8 = 18u8,
-}
-
-abi HypERC20 {
-    #[storage(read, write)]
-    fn initialize(initial_owner: Identity, mailbox_id: b256, interchain_gas_paymaster_id: b256, interchain_security_module_id: b256, total_supply: u64);
 }
 
 impl HypERC20 for Contract {
@@ -125,13 +117,8 @@ impl TokenRouter for Contract {
     fn transfer_remote(destination: u32, recipient: b256) -> b256 {
         require(msg_asset_id() == contract_id(), "msg_asset_id not self");
         let amount = msg_amount();
-
-        log(696969);
-        require(this_balance(contract_id()) == 10000000000, this_balance(contract_id()));
-        log(69420);
         // Burn the tokens.
         burn_tokens(amount);
-        log(6942069);
         // Transfer to the remote.
         token_router_storage_keys().transfer_remote(destination, recipient, local_amount_to_remote_amount(amount, LOCAL_DECIMALS, REMOTE_DECIMALS), Option::None)
     }
@@ -157,12 +144,17 @@ impl MessageRecipient for Contract {
 
         let message = token_router_storage_keys().handle(origin, sender, message_body);
 
-        // Note that transferring an amount of 0 to an Address will cause a panic.
-        // We therefore do not attempt minting when the amount is zero.
         let amount = remote_amount_to_local_amount(message.amount, REMOTE_DECIMALS, LOCAL_DECIMALS);
 
+        // Transferring an amount of 0 to an Address will cause a panic, which is
+        // documented FuelVM behavior.
+        // We therefore do not attempt minting when the amount is zero.
         if amount > 0 {
-            mint_to_id(amount, message.recipient);
+            // TODO: support transferring to ContractIds.
+            // There is no way to check if an address is a contract or not,
+            // and transferring to a contract vs an EOA requires the use of a different
+            // opcode.
+            mint_to_identity(amount, Identity::Address(Address::from(message.recipient)));
         }
     }
 
@@ -174,49 +166,9 @@ impl MessageRecipient for Contract {
     }
 }
 
-fn gas_router_storage_keys() -> GasRouterStorageKeys {
-    GasRouterStorageKeys {
-        routers: storage.routers,
-        destination_gas: storage.destination_gas,
-    }
-}
-
-fn token_router_storage_keys() -> TokenRouterStorageKeys {
-    gas_router_storage_keys()
-}
-
-#[storage(read, write)]
-fn burn_tokens(amount: u64) {
-    burn(amount);
-    storage.total_supply.write(total_supply() - U256::from((0, 0, 0, amount)));
-}
-
-#[storage(read, write)]
-fn mint_to_id(amount: u64, recipient: b256) {
-    // First mint to this contract
-    mint_token(amount);
-    // Then transfer to the recipient, which can be a contract or address
-    transfer_to_id(amount, recipient);
-}
-
-#[storage(read, write)]
-fn mint_to_identity(amount: u64, recipient: Identity) {
-    mint_token(amount);
-    transfer(amount, contract_id(), recipient);
-}
-
-#[storage(read, write)]
-fn mint_token(amount: u64) {
-    mint(amount);
-    storage.total_supply.write(total_supply() + U256::from((0, 0, 0, amount)));
-}
-
-#[storage(read)]
-fn total_supply() -> U256 {
-    storage.total_supply.try_read().unwrap_or(U256::from((0, 0, 0, 0)))
-}
-
-// Hyperlane Connection Client
+// ===========================================
+// ======= Hyperlane Connection Client =======
+// ===========================================
 
 impl HyperlaneConnectionClientGetter for Contract {
     /// Gets the Mailbox.
@@ -261,7 +213,9 @@ impl HyperlaneConnectionClientSetter for Contract {
     }
 }
 
-// Ownable
+// ===========================================
+// ================= Ownable =================
+// ===========================================
 
 impl Ownable for Contract {
     #[storage(read)]
@@ -280,7 +234,9 @@ impl Ownable for Contract {
     }
 }
 
-// Router
+// ===========================================
+// ============ Hyperlane Router =============
+// ===========================================
 
 impl HyperlaneRouter for Contract {
     #[storage(read)]
@@ -301,7 +257,9 @@ impl HyperlaneRouter for Contract {
     }
 }
 
-// GasRouter
+// ===========================================
+// ========== Hyperlane Gas Router ===========
+// ===========================================
 
 impl HyperlaneGasRouter for Contract {
     #[storage(read, write)]
@@ -319,4 +277,42 @@ impl HyperlaneGasRouter for Contract {
     fn destination_gas(domain: u32) -> u64 {
         gas_router_storage_keys().destination_gas(domain)
     }
+}
+
+// ===========================================
+// ================= helpers =================
+// ===========================================
+
+fn gas_router_storage_keys() -> GasRouterStorageKeys {
+    GasRouterStorageKeys {
+        routers: storage.routers,
+        destination_gas: storage.destination_gas,
+    }
+}
+
+fn token_router_storage_keys() -> TokenRouterStorageKeys {
+    gas_router_storage_keys()
+}
+
+#[storage(read, write)]
+fn burn_tokens(amount: u64) {
+    burn(amount);
+    storage.total_supply.write(total_supply() - U256::from((0, 0, 0, amount)));
+}
+
+#[storage(read, write)]
+fn mint_to_identity(amount: u64, recipient: Identity) {
+    mint_tokens(amount);
+    transfer(amount, contract_id(), recipient);
+}
+
+#[storage(read, write)]
+fn mint_tokens(amount: u64) {
+    mint(amount);
+    storage.total_supply.write(total_supply() + U256::from((0, 0, 0, amount)));
+}
+
+#[storage(read)]
+fn total_supply() -> U256 {
+    storage.total_supply.try_read().unwrap_or(U256::from((0, 0, 0, 0)))
 }

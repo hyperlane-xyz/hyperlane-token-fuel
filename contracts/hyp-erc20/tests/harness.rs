@@ -3,11 +3,11 @@ use std::str::FromStr;
 use fuels::{
     prelude::*,
     tx::ContractId,
-    types::{Bits256, Identity},
+    types::{Bits256, Identity}, programs::call_response::FuelCallResponse,
 };
 
-use hyperlane_core::{HyperlaneMessage as HyperlaneAgentMessage, H256, U256 as HyperlaneU256};
-use test_utils::{get_dispatched_message, get_revert_reason};
+use hyperlane_core::{Encode, HyperlaneMessage as HyperlaneAgentMessage, H256, U256 as HyperlaneU256};
+use test_utils::{get_dispatched_message, get_revert_reason, bits256_to_h256, get_revert_string};
 
 // Load abi from json
 abigen!(Contract(
@@ -326,6 +326,19 @@ async fn test_transfer_remote() {
     let transfer_amount: u64 = 10000000000;
     let recipient = Bits256([12u8; 32]);
 
+    let total_supply_before = sway_u256_to_hyperlane_u256(instance
+        .methods()
+        .total_supply()
+        .simulate()
+        .await
+        .unwrap()
+        .value);
+    // Sanity check the total supply
+    assert_eq!(
+        total_supply_before,
+        total_supply.into(),
+    );
+
     let call = instance
         .methods()
         .transfer_remote(TEST_REMOTE_DOMAIN, recipient)
@@ -357,5 +370,344 @@ async fn test_transfer_remote() {
             body: get_message_body(recipient, message_amount, None),
         }
         .id()
-    )
+    );
+
+    // Test that the message ID is returned
+    assert_eq!(message.id(), bits256_to_h256(call.value));
+
+    // Ensure that the event was logged
+    let events = call.decode_logs_with_type::<SentTransferRemoteEvent>().unwrap();
+    assert_eq!(
+        events,
+        vec![
+            SentTransferRemoteEvent {
+                destination: TEST_REMOTE_DOMAIN,
+                recipient,
+                amount: hyperlane_u256_to_sway_u256(message_amount),
+            }
+        ]
+    );
+
+    // Check that the tokens were burned
+    let total_supply_after = sway_u256_to_hyperlane_u256(instance
+        .methods()
+        .total_supply()
+        .simulate()
+        .await
+        .unwrap()
+        .value);
+    assert_eq!(
+        total_supply_before - total_supply_after,
+        transfer_amount.into(),
+    );
+}
+
+#[tokio::test]
+async fn test_transfer_remote_reverts_if_wrong_asset() {
+    // 1000 * 1e9, or 1000 "full" tokens
+    let total_supply: u64 = 1000000000000;
+
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, total_supply).await;
+
+    let recipient = Bits256([12u8; 32]);
+
+    let call = instance
+        .methods()
+        .transfer_remote(TEST_REMOTE_DOMAIN, recipient)
+        .call_params(
+            CallParameters::default()
+                .set_asset_id(BASE_ASSET_ID)
+                .set_amount(1),
+        )
+        .unwrap()
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "msg_asset_id not self",
+    );
+}
+
+// ============== handle ==============
+
+#[tokio::test]
+async fn test_handle() {
+    let mut total_supply = 100;
+    let (instance, instance_id) = get_contract_instance().await;
+    let (mailbox, igp) = initialize_and_enroll_remote_router(&instance, total_supply).await;
+    // 10 * 1e9, or 10 "full" tokens
+    let transfer_amount: u64 = 10000000000;
+    let message_amount =
+    HyperlaneU256::from(transfer_amount) * (HyperlaneU256::from(10).pow(9.into()));
+
+    // Vec<(recipient, is_contract)>
+    let transfer_recipients = vec![
+        (Bits256([12; 32]), false), // An address
+        // TODO: support contracts
+
+        // (Bits256(igp.id().hash().into()), true), // A contract
+    ];
+
+    for (transfer_recipient, is_contract) in transfer_recipients {
+        let message = HyperlaneAgentMessage {
+            version: 0u8,
+            nonce: 0u32,
+            origin: TEST_REMOTE_DOMAIN,
+            sender: H256::from_str(TEST_REMOTE_ROUTER).unwrap(),
+            destination: LOCAL_DOMAIN,
+            recipient: H256::from_slice(instance_id.as_slice()),
+            body: get_message_body(transfer_recipient, message_amount, None),
+        };
+        let encoded_message = message.to_vec();
+    
+        let call = mailbox
+            .methods()
+            .process(Bytes(vec![]), Bytes(encoded_message))
+            .estimate_tx_dependencies(Some(10))
+            .await
+            .unwrap()
+            .call()
+            .await
+            .unwrap();
+
+        // Event was logged
+        let events = instance.log_decoder().decode_logs_with_type::<ReceivedTransferRemoteEvent>(&call.receipts).unwrap();
+        assert_eq!(
+            events,
+            vec![
+                ReceivedTransferRemoteEvent {
+                    origin: TEST_REMOTE_DOMAIN,
+                    recipient: transfer_recipient,
+                    amount: hyperlane_u256_to_sway_u256(message_amount),
+                }
+            ]
+        );
+    
+        // Check that the tokens were minted, increasing the total supply
+
+        // Increase the total supply in our test accounting
+        total_supply += transfer_amount;
+        // Get the on-chain value
+        let new_total_supply = sway_u256_to_hyperlane_u256(instance
+            .methods()
+            .total_supply()
+            .simulate()
+            .await
+            .unwrap()
+            .value);
+        assert_eq!(
+            new_total_supply,
+            total_supply.into()
+        );
+
+        // And that they were minted to the correct recipient
+        let balance = if is_contract {
+            instance
+                .account()
+                .provider()
+                .unwrap()
+                .get_contract_asset_balance(&ContractId::new(transfer_recipient.0).into(), AssetId::new(instance_id.into()))
+                .await
+                .unwrap()
+        } else {
+            instance
+                .account()
+                .provider()
+                .unwrap()
+                .get_asset_balance(&Address::new(transfer_recipient.0).into(), AssetId::new(instance_id.into()))
+                .await
+                .unwrap()
+        };
+        assert_eq!(balance, transfer_amount);
+    }
+}
+
+#[tokio::test]
+async fn test_handle_reverts_if_caller_not_mailbox() {
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let call = instance
+        .methods()
+        // Params don't matter, we expect the only_mailbox check to be first
+        .handle(1u32, Bits256([1; 32]), Bytes(vec![1, 2, 3]))
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "msg sender not mailbox",
+    );
+}
+
+#[tokio::test]
+async fn test_handle_reverts_if_message_sender_not_remote_router() {
+    let (instance, instance_id) = get_contract_instance().await;
+    let (mailbox, _igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let transfer_recipient = Bits256([12; 32]);
+    let transfer_amount = HyperlaneU256::from(123);
+
+    let message = HyperlaneAgentMessage {
+        version: 0u8,
+        nonce: 0u32,
+        origin: TEST_REMOTE_DOMAIN,
+        // Sender not remote router
+        sender: H256::zero(),
+        destination: LOCAL_DOMAIN,
+        recipient: H256::from_slice(instance_id.as_slice()),
+        body: get_message_body(transfer_recipient, transfer_amount, None),
+    };
+    let encoded_message = message.to_vec();
+
+    let call = mailbox
+        .methods()
+        .process(Bytes(vec![]), Bytes(encoded_message))
+        .set_contract_ids(&[instance.contract_id().clone()])
+        .call()
+        .await;
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_string(call.err().unwrap()),
+        "provided router is not enrolled for origin domain",
+    );
+}
+
+// ============== hyperlane connection client setters ==============
+
+#[tokio::test]
+async fn test_hyperlane_connection_client_setters_revert_if_caller_not_owner() {
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let dummy_bits256 = Bits256([69; 32]);
+
+    // Transfer ownership to a different address
+    instance
+        .methods()
+        .transfer_ownership(Identity::Address(Address::new([1; 32])))
+        .call()
+        .await
+        .unwrap();
+
+    // set_mailbox
+    let call = instance
+        .methods()
+        .set_mailbox(dummy_bits256)
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+
+    // set_interchain_gas_paymaster
+    let call = instance
+        .methods()
+        .set_interchain_gas_paymaster(dummy_bits256)
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+
+    // set_interchain_security_module
+    let call = instance
+        .methods()
+        .set_interchain_security_module(dummy_bits256)
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+}
+
+// ============== hyperlane router ==============
+
+#[tokio::test]
+async fn test_hyperlane_router_enrolling_reverts_if_sender_not_owner() {
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let dummy_domain = 1u32;
+    let dummy_bits256 = Bits256([69; 32]);
+
+    // Transfer ownership to a different address
+    instance
+        .methods()
+        .transfer_ownership(Identity::Address(Address::new([1; 32])))
+        .call()
+        .await
+        .unwrap();
+
+    // enroll_remote_router
+    let call = instance
+        .methods()
+        .enroll_remote_router(dummy_domain, Some(dummy_bits256))
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+
+    // enroll_remote_routers
+    let call = instance
+        .methods()
+        .enroll_remote_routers(vec![
+            RemoteRouterConfig {
+                domain: dummy_domain,
+                router: Some(dummy_bits256),
+            },
+        ])
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+}
+
+// ============== hyperlane gas router ==============
+
+#[tokio::test]
+async fn test_hyperlane_gas_router_setting_reverts_if_sender_not_owner() {
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let dummy_domain = 1u32;
+    let dummy_gas = 1234u64;
+
+    // Transfer ownership to a different address
+    instance
+        .methods()
+        .transfer_ownership(Identity::Address(Address::new([1; 32])))
+        .call()
+        .await
+        .unwrap();
+
+    // set_destination_gas_configs
+    let call = instance
+        .methods()
+        .set_destination_gas_configs(vec![
+            GasRouterConfig {
+                domain: dummy_domain,
+                gas: dummy_gas,
+            },
+        ])
+        .call()
+        .await;
+    assert_not_owner_revert(call);
+}
+
+// utils
+
+fn hyperlane_u256_to_sway_u256(hyp_u256: HyperlaneU256) -> U256 {
+    U256 {
+        a: hyp_u256.0[3],
+        b: hyp_u256.0[2],
+        c: hyp_u256.0[1],
+        d: hyp_u256.0[0],
+    }
+}
+
+fn sway_u256_to_hyperlane_u256(sway_u256: U256) -> HyperlaneU256 {
+    HyperlaneU256([sway_u256.d, sway_u256.c, sway_u256.b, sway_u256.a])
+}
+
+fn assert_not_owner_revert<D>(call: Result<FuelCallResponse<D>>) {
+    assert!(call.is_err());
+    assert_eq!(
+        get_revert_reason(call.err().unwrap()),
+        "NotOwner",
+    );
 }

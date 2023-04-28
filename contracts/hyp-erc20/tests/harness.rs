@@ -440,7 +440,7 @@ async fn test_transfer_remote_reverts_if_wrong_asset() {
 async fn test_handle() {
     let mut total_supply = 100;
     let (instance, instance_id) = get_contract_instance().await;
-    let (mailbox, igp) = initialize_and_enroll_remote_router(&instance, total_supply).await;
+    let (mailbox, _igp) = initialize_and_enroll_remote_router(&instance, total_supply).await;
     // 10 * 1e9, or 10 "full" tokens
     let transfer_amount: u64 = 10000000000;
     let message_amount =
@@ -448,10 +448,10 @@ async fn test_handle() {
 
     // Vec<(recipient, is_contract)>
     let transfer_recipients = vec![
-        (Bits256([12; 32]), false), // An address
-                                    // TODO: support contracts
-
-                                    // (Bits256(igp.id().hash().into()), true), // A contract
+        // An address
+        (Bits256([12; 32]), false),
+        // TODO: support contracts
+        // (Bits256(igp.id().hash().into()), true), // A contract
     ];
 
     for (transfer_recipient, is_contract) in transfer_recipients {

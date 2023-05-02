@@ -337,32 +337,3 @@ async fn test_quote_gas_payment() {
         }]
     );
 }
-
-#[tokio::test]
-async fn test_code_size() {
-    let (instance, _id) = get_contract_instance().await;
-
-    let (_, igp) = initialize_hyperlane_connection_client(&instance).await;
-
-    let call = instance
-        .methods()
-        .code_size(Bits256(igp.id().hash().into()))
-        // .code_size(Bits256([1u8; 32]))
-        // .set_contract_ids(&[ContractId::new([1u8; 32]).into()])
-        // .set_contract_ids(&[igp.id()])
-        .estimate_tx_dependencies(Some(5))
-        .await
-        .unwrap()
-        .simulate()
-        .await;
-
-    println!("call {:?}", call);
-
-    assert!(call.is_ok());
-    println!("call.unwrap().value {:?}", call.unwrap().value);
-
-    // let code_size = call.get_return_value().unwrap().value;
-    // assert!(code_size > 0);
-
-    // assert!(false);
-}

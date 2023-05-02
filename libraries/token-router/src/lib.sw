@@ -25,6 +25,7 @@ pub struct ReceivedTransferRemoteEvent {
 
 impl TokenRouterStorageKeys {
     /// Sends a transfer remote message and logs the event.
+    /// Does not pay for gas.
     #[storage(read, write)]
     pub fn transfer_remote(
         self,
@@ -33,9 +34,6 @@ impl TokenRouterStorageKeys {
         amount_or_id: U256,
         metadata: Option<Bytes>,
 ) -> b256 {
-        // TODO: use this for a transfer_remote_with_gas method (?) for the native base asset
-        // let gas_router: GasRouterStorageKeys = self;
-        // let id = gas_router.dispatch_with_gas(destination, EncodedMessage::new(recipient, amount_or_id, metadata).bytes, msg_amount(), msg_sender().unwrap());
         let id = self.routers.dispatch(destination, EncodedMessage::new(recipient, amount_or_id, metadata).bytes);
         log(SentTransferRemoteEvent {
             destination,

@@ -205,12 +205,6 @@ impl HyperlaneConnectionClientGetter for Contract {
     fn interchain_gas_paymaster() -> b256 {
         interchain_gas_paymaster()
     }
-
-    /// Gets the InterchainSecurityModule.
-    #[storage(read)]
-    fn interchain_security_module_dupe_todo_remove() -> b256 {
-        interchain_security_module()
-    }
 }
 
 impl HyperlaneConnectionClientSetter for Contract {

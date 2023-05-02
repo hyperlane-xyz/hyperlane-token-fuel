@@ -128,7 +128,7 @@ async fn test_initialize() {
 
     let value = instance
         .methods()
-        .interchain_security_module_dupe_todo_remove()
+        .interchain_security_module()
         .simulate()
         .await
         .unwrap()
@@ -265,9 +265,7 @@ async fn test_interchain_security_module_reverts_if_not_set() {
     let (instance, _id) = get_contract_instance().await;
 
     test_reverts(
-        instance
-            .methods()
-            .interchain_security_module_dupe_todo_remove(),
+        instance.methods().interchain_security_module(),
         "ISM not set",
     )
     .await;
@@ -281,9 +279,7 @@ async fn test_set_interchain_security_module() {
 
     test_setter(
         instance.methods().set_interchain_security_module(ism),
-        instance
-            .methods()
-            .interchain_security_module_dupe_todo_remove(),
+        instance.methods().interchain_security_module(),
         ism,
         InterchainSecurityModuleSetEvent { module: ism },
     )

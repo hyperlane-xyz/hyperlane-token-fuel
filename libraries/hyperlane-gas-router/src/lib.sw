@@ -12,7 +12,6 @@ use interface::GasRouterConfig;
 
 type DestinationGas = StorageMap<u32, u64>;
 
-
 // TODO: the desired interface for using a gas router
 // is to declare a single `GasRouter` struct in storage,
 // which would give access to Routers and destination gas.

@@ -56,7 +56,6 @@ impl HyperlaneGasRouterTest for Contract {
         mint(1000);
         transfer_regardless(1000, id);
 
-
         // force_transfer_to_contract(1000, contract_id(), ContractId::from(id));
 
         // if contract_id_is_input(id) {

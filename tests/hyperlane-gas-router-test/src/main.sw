@@ -1,9 +1,6 @@
 contract;
 
-use std::{
-    bytes::Bytes,
-    constants::ZERO_B256,
-};
+use std::{bytes::Bytes, constants::ZERO_B256};
 
 use hyperlane_connection_client::initialize;
 use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};

@@ -624,6 +624,57 @@ async fn test_handle_reverts_if_message_sender_not_remote_router() {
     );
 }
 
+// ============== pay_for_gas ==============
+
+#[tokio::test]
+async fn test_pay_for_gas() {
+    let (instance, _instance_id) = get_contract_instance().await;
+    let (_mailbox, igp) = initialize_and_enroll_remote_router(&instance, 0).await;
+
+    let destination_domain = TEST_REMOTE_DOMAIN;
+    let message_id = Bits256([69u8; 32]);
+
+    let quote = instance
+        .methods()
+        .quote_gas_payment(destination_domain)
+        .set_contract_ids(&[igp.contract_id().clone()])
+        .simulate()
+        .await
+        .unwrap()
+        .value;
+
+    let call = instance
+        .methods()
+        .pay_for_gas(message_id, destination_domain)
+        .call_params(
+            CallParameters::default()
+                .set_asset_id(BASE_ASSET_ID)
+                .set_amount(quote),
+        )
+        .unwrap()
+        .estimate_tx_dependencies(Some(5))
+        .await
+        .unwrap()
+        .call()
+        .await
+        .unwrap();
+
+    // Event was logged
+    let events = igp
+        .log_decoder()
+        .decode_logs_with_type::<igp_contract::PayForGasCalled>(&call.receipts)
+        .unwrap();
+    assert_eq!(
+        events,
+        vec![igp_contract::PayForGasCalled {
+            destination_domain,
+            message_id,
+            gas_amount: TEST_REMOTE_GAS_AMOUNT,
+            refund_address: Identity::Address(instance.account().address().into()),
+        }],
+    );
+}
+
 // ============== hyperlane connection client setters ==============
 
 #[tokio::test]

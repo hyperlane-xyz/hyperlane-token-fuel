@@ -1,6 +1,6 @@
 # hyperlane-token-fuel
 
-Building (with forc v0.38.0):
+Building (with forc v0.38.0, required for new storage API):
 
 ```
 forc build
@@ -9,5 +9,5 @@ forc build
 Running tests:
 
 ```
-cargo test
+forc test && cargo test
 ```

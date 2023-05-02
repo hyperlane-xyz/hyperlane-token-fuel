@@ -35,11 +35,17 @@ async fn get_contract_instance() -> (HyperlaneConnectionClientTest<WalletUnlocke
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
+    let id = Contract::load_from(
         "./out/debug/hyperlane-connection-client-test.bin",
-        &wallet,
-        DeployConfiguration::default(),
+        LoadConfiguration::default().set_storage_configuration(
+            StorageConfiguration::load_from(
+                "./out/debug/hyperlane-connection-client-test-storage_slots.json",
+            )
+            .unwrap(),
+        ),
     )
+    .unwrap()
+    .deploy(&wallet, TxParameters::default())
     .await
     .unwrap();
 
@@ -84,7 +90,7 @@ async fn test_setter<
 ) {
     let call = setter_handler.call().await.unwrap();
 
-    let events = call.get_logs_with_type::<Event>().unwrap();
+    let events = call.decode_logs_with_type::<Event>().unwrap();
     assert_eq!(events, vec![expected_event],);
 
     let value = getter_handler.simulate().await.unwrap().value;

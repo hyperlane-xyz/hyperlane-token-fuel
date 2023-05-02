@@ -2,8 +2,6 @@ library;
 
 mod interface;
 
-use core::experimental::storage::*;
-use std::experimental::storage::*;
 use std::{auth::msg_sender, bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use std_lib_extended::option::*;
@@ -13,9 +11,10 @@ use hyperlane_connection_client::{interchain_gas_paymaster, mailbox};
 
 use interface::RemoteRouterConfig;
 
+// A library for sending messages to remote domains with a configured amount
+// of gas. Expected to be used alongside the hyperlane-connection-client library.
+
 /// A map from domain ID to remote router address.
-/// Using this type requires the contract to have initialized
-/// a HyperlaneConnectionClient.
 pub type Routers = StorageMap<u32, b256>;
 
 /// Logged when a remote router is enrolled.

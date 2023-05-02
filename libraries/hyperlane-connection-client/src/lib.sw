@@ -3,7 +3,7 @@ library;
 mod r#storage;
 mod interface;
 
-use std::{auth::msg_sender, logging::log, storage::{get, store}, u256::U256};
+use std::{auth::msg_sender, logging::log, storage::storage_api::{read, write}, u256::U256};
 
 use hyperlane_interfaces::{Mailbox};
 use std_lib_extended::{auth::msg_sender_b256, option::*};
@@ -13,6 +13,20 @@ use storage::{
     INTERCHAIN_SECURITY_MODULE_STORAGE_KEY,
     MAILBOX_STORAGE_KEY,
 };
+
+// This library manages stored b256s corresponding to the IDs of a mailbox, IGP, and ISM.
+
+// TODO: consider moving things into a struct:
+//    struct HyperlaneConnectionClient {
+//        mailbox: b256,
+//        interchain_gas_paymaster: b256,
+//        interchain_security_module: b256,
+//    }
+//
+// This wasnt done because the storage API doesn't allow for
+// reading specific fields of a struct, only the entire struct.
+// E.g. `connection_client.read().mailbox` is possible,
+// but this wastefully reads the IGP & ISM b256s as well.
 
 /// Logged when the Mailbox is set.
 pub struct MailboxSetEvent {
@@ -52,7 +66,7 @@ pub fn initialize(
 /// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_mailbox(mailbox: b256) {
-    store(MAILBOX_STORAGE_KEY, mailbox);
+    write(MAILBOX_STORAGE_KEY, 0, mailbox);
     log(MailboxSetEvent { mailbox });
 }
 
@@ -60,7 +74,7 @@ pub fn set_mailbox(mailbox: b256) {
 /// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
-    store(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY, interchain_gas_paymaster);
+    write(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY, 0, interchain_gas_paymaster);
     log(InterchainGasPaymasterSetEvent {
         interchain_gas_paymaster,
     });
@@ -70,7 +84,7 @@ pub fn set_interchain_gas_paymaster(interchain_gas_paymaster: b256) {
 /// The caller is expected to perform authentication.
 #[storage(write)]
 pub fn set_interchain_security_module(module: b256) {
-    store(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY, module);
+    write(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY, 0, module);
     log(InterchainSecurityModuleSetEvent { module });
 }
 
@@ -107,17 +121,17 @@ pub fn only_mailbox() {
 /// Returns the Mailbox, or None if one is not set.
 #[storage(read)]
 fn try_mailbox() -> Option<b256> {
-    get(MAILBOX_STORAGE_KEY)
+    read(MAILBOX_STORAGE_KEY, 0)
 }
 
 /// Returns the InterchainGasPaymaster, or None if one is not set.
 #[storage(read)]
 fn try_interchain_gas_paymaster() -> Option<b256> {
-    get(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY)
+    read(INTERCHAIN_GAS_PAYMASTER_STORAGE_KEY, 0)
 }
 
 /// Returns the InterchainSecurityModule, or None if one is not set.
 #[storage(read)]
 fn try_interchain_security_module() -> Option<b256> {
-    get(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY)
+    read(INTERCHAIN_SECURITY_MODULE_STORAGE_KEY, 0)
 }

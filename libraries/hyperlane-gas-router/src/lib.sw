@@ -2,10 +2,7 @@ library;
 
 mod interface;
 
-use core::experimental::storage::*;
-use std::experimental::storage::*;
-
-use std::{bytes::Bytes, logging::log};
+use std::{bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use hyperlane_connection_client::interchain_gas_paymaster;
 use hyperlane_interfaces::igp::InterchainGasPaymaster;
@@ -13,13 +10,23 @@ use hyperlane_router::*;
 
 use interface::GasRouterConfig;
 
-type DestinationGas = StorageMap<u32, u64>;
+// A library for sending messages to remote domains with a configured amount
+// of gas. Expected to be used alongside the hyperlane-connection-client
+// and hyperlane-router libraries.
 
+/// A map from remote domain to the amount of gas to pay for when sending a message.
+type DestinationGas = StorageMap<u32, u64>;
 
 // TODO: the desired interface for using a gas router
 // is to declare a single `GasRouter` struct in storage,
-// which would give access to Routers and destination gas.
-// However, at the time of writing, forc v0.37.1 doesn't allow
+// which would give access to Routers and destination gas. E.g.:
+//
+//   pub struct GasRouter {
+//       routers: Routers,
+//       destination_gas: StorageMap<u32, u64>,
+//   }
+//
+// However, at the time of writing, forc v0.38.0 doesn't allow
 // for multiple StorageMaps in a single struct.
 // Instead, callers are expected to declare two separate storage variables, e.g.:
 //
@@ -29,11 +36,6 @@ type DestinationGas = StorageMap<u32, u64>;
 // }
 //
 // Which can then be used to construct a `GasRouterStorageKeys`.
-
-// pub struct GasRouter {
-//     routers: Routers,
-//     destination_gas: StorageMap<u32, u64>,
-// }
 
 /// Storage keys for Routers and the destination_gas map.
 /// This is the type in which gas router functionality is
@@ -66,6 +68,24 @@ impl GasRouterStorageKeys {
 }
 
 impl GasRouterStorageKeys {
+    /// Pays for gas for an already-dispatched message to the destination domain,
+    /// using the configured gas amount.
+    #[storage(read)]
+    pub fn pay_for_gas(
+        self,
+        message_id: b256,
+        destination_domain: u32,
+        gas_payment: u64,
+        gas_payment_refund_address: Identity,
+) {
+        let gas_amount = self.destination_gas(destination_domain);
+        let igp = abi(InterchainGasPaymaster, interchain_gas_paymaster());
+        igp.pay_for_gas {
+            asset_id: BASE_ASSET_ID.value,
+            coins: gas_payment,
+        }(message_id, destination_domain, gas_amount, gas_payment_refund_address);
+    }
+
     /// Quotes the gas payment for a destination domain, using the
     /// configured gas.
     #[storage(read)]

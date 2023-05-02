@@ -6,5 +6,5 @@ name = "hyperlane_router"
 
 [dependencies]
 hyperlane_connection_client = { path = "../hyperlane-connection-client" }
-hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
-std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "1f99212" }
+std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "1f99212" }

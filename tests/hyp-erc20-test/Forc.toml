@@ -2,13 +2,10 @@
 authors = ["Trevor Porter"]
 entry = "main.sw"
 license = "Apache-2.0"
-name = "hyp-erc20"
+name = "hyp_erc20_test"
 
 [dependencies]
 hyperlane_connection_client = { path = "../../libraries/hyperlane-connection-client" }
 hyperlane_gas_router = { path = "../../libraries/hyperlane-gas-router" }
-hyperlane_interfaces = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "1f99212" }
 hyperlane_router = { path = "../../libraries/hyperlane-router" }
-ownership = { git = "https://github.com/fuellabs/sway-libs", tag = "v0.9.0" }
-token_interface = { path = "../../libraries/token-interface" }
 token_router = { path = "../../libraries/token-router" }

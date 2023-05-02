@@ -6,6 +6,7 @@ use hyperlane_connection_client::{
     interchain_security_module,
     interface::{
         HyperlaneConnectionClientGetter,
+        HyperlaneConnectionClientIsmGetter,
         HyperlaneConnectionClientSetter,
     },
     mailbox,
@@ -42,13 +43,15 @@ impl HyperlaneConnectionClientGetter for Contract {
     }
 
     #[storage(read)]
-    fn interchain_security_module() -> b256 {
-        interchain_security_module()
-    }
-
-    #[storage(read)]
     fn interchain_gas_paymaster() -> b256 {
         interchain_gas_paymaster()
+    }
+}
+
+impl HyperlaneConnectionClientIsmGetter for Contract {
+    #[storage(read)]
+    fn interchain_security_module() -> b256 {
+        interchain_security_module()
     }
 }
 

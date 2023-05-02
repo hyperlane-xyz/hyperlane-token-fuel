@@ -1,6 +1,8 @@
 [workspace]
 
 members = [
+    "contracts/hyp-erc20",
+
     "tests/hyperlane-connection-client-test",
     "tests/hyperlane-gas-router-test",
     "tests/hyperlane-router-test",
@@ -14,7 +16,7 @@ repository = "https://github.com/hyperlane-xyz/hyperlane-token-sway"
 authors = ["Abacus Works"]
 
 [workspace.dependencies]
-fuels = { git = "https://github.com/FuelLabs/fuels-rs", rev = "f5d08d6" }
+fuels = { git = "https://github.com/FuelLabs/fuels-rs", tag = "v0.41.0" }
 hyperlane-core = { git = "https://github.com/hyperlane-xyz/hyperlane-monorepo", rev = "930cded" }
-test-utils = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
+test-utils = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "1f99212" }
 tokio = { version = "1.12" }

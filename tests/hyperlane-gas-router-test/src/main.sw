@@ -1,14 +1,6 @@
 contract;
 
-use core::experimental::storage::*;
-use std::{bytes::Bytes, constants::ZERO_B256, experimental::storage::*};
-
-impl StorageKey<b256> {
-    #[storage(read, write)]
-    pub fn insert(self, key: b256) {
-        write::<b256>(key, 0, key);
-    }
-}
+use std::{bytes::Bytes, constants::ZERO_B256};
 
 use hyperlane_connection_client::initialize;
 use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};

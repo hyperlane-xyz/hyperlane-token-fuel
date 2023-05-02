@@ -13,7 +13,6 @@ use interface::GasRouterConfig;
 /// A library for sending messages to remote domains with a configured amount
 /// of gas. Expected to be used alongside the hyperlane-connection-client
 /// and hyperlane-router libraries.
-
 type DestinationGas = StorageMap<u32, u64>;
 
 // TODO: the desired interface for using a gas router

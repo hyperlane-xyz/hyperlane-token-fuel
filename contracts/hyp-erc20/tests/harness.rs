@@ -465,7 +465,7 @@ async fn test_transfer_remote_reverts_if_amount_exceeds_sender_balance() {
         .call_params(
             CallParameters::default()
                 .set_asset_id(AssetId::new(instance_id.into()))
-                .set_amount(total_supply +1 ),
+                .set_amount(total_supply + 1),
         )
         .unwrap()
         .estimate_tx_dependencies(Some(5))

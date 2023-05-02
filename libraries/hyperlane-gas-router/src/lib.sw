@@ -2,9 +2,6 @@ library;
 
 mod interface;
 
-use core::experimental::storage::*;
-use std::experimental::storage::*;
-
 use std::{bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use hyperlane_connection_client::interchain_gas_paymaster;

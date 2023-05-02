@@ -7,5 +7,4 @@ name = "token_router"
 [dependencies]
 hyperlane_gas_router = { path = "../hyperlane-gas-router" }
 message = { path = "../message" }
-# std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "71e6d37" }
-std_lib_extended = { path = "/Users/trevor/fuel-contracts/contracts/std-lib-extended" }
+std_lib_extended = { git = "https://github.com/hyperlane-xyz/fuel-contracts", rev = "1f99212" }

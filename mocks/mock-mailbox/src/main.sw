@@ -4,8 +4,6 @@ use std::{
     auth::msg_sender,
     bytes::Bytes,
     constants::ZERO_B256,
-    experimental::storage::*,
-    storage::StorageBytes,
 };
 
 use hyperlane_interfaces::{DispatchIdEvent, Mailbox, MessageRecipient, ProcessEvent};

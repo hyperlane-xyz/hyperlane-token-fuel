@@ -1,9 +1,9 @@
 # hyperlane-token-fuel
 
-Building (with forc v0.37.1):
+Building (with forc v0.38.0):
 
 ```
-forc build --experimental-storage
+forc build
 ```
 
 Running tests:

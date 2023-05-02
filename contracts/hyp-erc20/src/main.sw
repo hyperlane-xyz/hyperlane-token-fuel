@@ -21,9 +21,6 @@ use std::{
     u256::U256,
 };
 
-use core::experimental::storage::*;
-use std::experimental::storage::*;
-
 use hyperlane_interfaces::{
     igp::InterchainGasPaymaster,
     Mailbox,
@@ -49,7 +46,7 @@ use hyperlane_connection_client::{
 use hyperlane_router::{interface::{HyperlaneRouter, RemoteRouterConfig}, Routers};
 use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};
 
-use ownership::{data_structures::State, only_owner, owner, set_ownership, transfer_ownership};
+use ownership::{*, data_structures::State};
 
 use token_interface::Token;
 use token_router::{
@@ -62,6 +59,7 @@ use token_router::{
 use interface::HypERC20;
 
 storage {
+    ownership: Ownership = Ownership::uninitialized(),
     total_supply: U256 = U256::from((0, 0, 0, 0)),
     routers: Routers = Routers {},
     destination_gas: StorageMap<u32, u64> = StorageMap {},
@@ -84,7 +82,7 @@ impl HypERC20 for Contract {
         total_supply: u64,
     ) {
         // This will revert if called twice, even if the sender is the owner.
-        set_ownership(initial_owner);
+        storage.ownership.set_ownership(initial_owner);
         initialize_hyperlane_connection_client(mailbox_id, interchain_gas_paymaster_id, interchain_security_module_id);
         if total_supply > 0 {
             mint_to_identity(total_supply, initial_owner);
@@ -194,21 +192,21 @@ impl HyperlaneConnectionClientSetter for Contract {
     /// Sets the Mailbox if the caller is the owner.
     #[storage(read, write)]
     fn set_mailbox(new_mailbox: b256) {
-        only_owner();
+        storage.ownership.only_owner();
         set_mailbox(new_mailbox);
     }
 
     /// Sets the InterchainGasPaymaster if the caller is the owner.
     #[storage(read, write)]
     fn set_interchain_gas_paymaster(new_interchain_gas_paymaster: b256) {
-        only_owner();
+        storage.ownership.only_owner();
         set_interchain_gas_paymaster(new_interchain_gas_paymaster);
     }
 
     /// Sets the InterchainSecurityModule if the caller is the owner.
     #[storage(read, write)]
     fn set_interchain_security_module(module: b256) {
-        only_owner();
+        storage.ownership.only_owner();
         set_interchain_security_module(module);
     }
 }
@@ -220,17 +218,17 @@ impl HyperlaneConnectionClientSetter for Contract {
 impl Ownable for Contract {
     #[storage(read)]
     fn owner() -> State {
-        owner()
+        storage.ownership.owner()
     }
 
     #[storage(read, write)]
     fn transfer_ownership(new_owner: Identity) {
-        transfer_ownership(new_owner)
+        storage.ownership.transfer_ownership(new_owner)
     }
 
     #[storage(read, write)]
     fn set_ownership(new_owner: Identity) {
-        set_ownership(new_owner)
+        storage.ownership.set_ownership(new_owner)
     }
 }
 
@@ -246,13 +244,13 @@ impl HyperlaneRouter for Contract {
 
     #[storage(read, write)]
     fn enroll_remote_router(domain: u32, router: Option<b256>) {
-        only_owner();
+        storage.ownership.only_owner();
         storage.routers.enroll_remote_router(domain, router);
     }
 
     #[storage(read, write)]
     fn enroll_remote_routers(configs: Vec<RemoteRouterConfig>) {
-        only_owner();
+        storage.ownership.only_owner();
         storage.routers.enroll_remote_routers(configs);
     }
 }
@@ -264,7 +262,7 @@ impl HyperlaneRouter for Contract {
 impl HyperlaneGasRouter for Contract {
     #[storage(read, write)]
     fn set_destination_gas_configs(configs: Vec<GasRouterConfig>) {
-        only_owner();
+        storage.ownership.only_owner();
         gas_router_storage_keys().set_destination_gas_configs(configs);
     }
 

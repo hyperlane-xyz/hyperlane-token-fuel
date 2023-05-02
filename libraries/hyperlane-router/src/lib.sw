@@ -2,8 +2,6 @@ library;
 
 mod interface;
 
-use core::experimental::storage::*;
-use std::experimental::storage::*;
 use std::{auth::msg_sender, bytes::Bytes, constants::BASE_ASSET_ID, logging::log};
 
 use std_lib_extended::option::*;

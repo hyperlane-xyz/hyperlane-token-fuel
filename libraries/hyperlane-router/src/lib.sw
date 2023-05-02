@@ -11,8 +11,9 @@ use hyperlane_connection_client::{interchain_gas_paymaster, mailbox};
 
 use interface::RemoteRouterConfig;
 
-/// A library for sending messages to remote domains with a configured amount
-/// of gas. Expected to be used alongside the hyperlane-connection-client library.
+// A library for sending messages to remote domains with a configured amount
+// of gas. Expected to be used alongside the hyperlane-connection-client library.
+
 /// A map from domain ID to remote router address.
 pub type Routers = StorageMap<u32, b256>;
 

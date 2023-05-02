@@ -1,12 +1,20 @@
 contract;
 
-use std::{bytes::Bytes, constants::ZERO_B256};
-
-use std::call_frames::contract_id;
-
-use std::token::{force_transfer_to_contract, mint, transfer_to_address};
-
-use std::inputs::{Input, input_count, input_type};
+use std::{
+    bytes::Bytes,
+    call_frames::contract_id,
+    constants::ZERO_B256,
+    inputs::{
+        Input,
+        input_count,
+        input_type,
+    },
+    token::{
+        force_transfer_to_contract,
+        mint,
+        transfer_to_address,
+    },
+};
 
 use hyperlane_connection_client::initialize;
 use hyperlane_gas_router::{GasRouterStorageKeys, interface::{GasRouterConfig, HyperlaneGasRouter}};

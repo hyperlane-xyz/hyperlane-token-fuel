@@ -26,7 +26,7 @@ use storage::{
 // This wasnt done because the storage API doesn't allow for
 // reading specific fields of a struct, only the entire struct.
 // E.g. `connection_client.read().mailbox` is possible,
-// but this reads the IGP & ISM b256s as well.
+// but this wastefully reads the IGP & ISM b256s as well.
 
 /// Logged when the Mailbox is set.
 pub struct MailboxSetEvent {

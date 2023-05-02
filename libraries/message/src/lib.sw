@@ -12,7 +12,7 @@ pub struct Message {
     metadata: Option<Bytes>,
 }
 
-/// A heap-allocated tightly packed Hyperlane message.
+/// A heap-allocated tightly packed warp route message.
 /// Byte layout:
 ///   recipient:   [0:32]
 ///   amount:      [32:64]

@@ -434,6 +434,45 @@ async fn test_transfer_remote_reverts_if_wrong_asset() {
     );
 }
 
+#[tokio::test]
+async fn test_transfer_remote_reverts_if_amount_exceeds_sender_balance() {
+    // 1000 * 1e9, or 1000 "full" tokens
+    let total_supply: u64 = 1000000000000;
+
+    let (instance, instance_id) = get_contract_instance().await;
+    let (_mailbox, _igp) = initialize_and_enroll_remote_router(&instance, total_supply).await;
+
+    let recipient = Bits256([12u8; 32]);
+
+    // Sanity check things work as expected if sending the full balance
+    let call = instance
+        .methods()
+        .transfer_remote(TEST_REMOTE_DOMAIN, recipient)
+        .call_params(
+            CallParameters::default()
+                .set_asset_id(AssetId::new(instance_id.into()))
+                .set_amount(total_supply),
+        )
+        .unwrap()
+        .estimate_tx_dependencies(Some(5))
+        .await;
+    assert!(call.is_ok());
+
+    // And now when sending more than the balance
+    let call = instance
+        .methods()
+        .transfer_remote(TEST_REMOTE_DOMAIN, recipient)
+        .call_params(
+            CallParameters::default()
+                .set_asset_id(AssetId::new(instance_id.into()))
+                .set_amount(total_supply +1 ),
+        )
+        .unwrap()
+        .estimate_tx_dependencies(Some(5))
+        .await;
+    assert!(call.is_err());
+}
+
 // ============== handle ==============
 
 #[tokio::test]

@@ -4,6 +4,8 @@ use std::{bytes::Bytes, u256::U256};
 
 use std_lib_extended::bytes::*;
 
+/// A warp route message.
+/// Reference implementation: https://github.com/hyperlane-xyz/hyperlane-token/blob/main/contracts/libs/Message.sol
 pub struct Message {
     recipient: b256,
     amount: U256,
@@ -16,7 +18,7 @@ pub struct Message {
 ///   amount:      [32:64]
 ///   metadata:    [64:??]
 ///
-/// TODO add link to reference implementation
+/// Reference implementation: https://github.com/hyperlane-xyz/hyperlane-token/blob/main/contracts/libs/Message.sol
 pub struct EncodedMessage {
     bytes: Bytes,
 }

@@ -24,6 +24,7 @@ pub struct ReceivedTransferRemoteEvent {
 }
 
 impl TokenRouterStorageKeys {
+    /// Sends a transfer remote message and logs the event.
     #[storage(read, write)]
     pub fn transfer_remote(
         self,
@@ -44,6 +45,9 @@ impl TokenRouterStorageKeys {
         id
     }
 
+    /// Handles a transfer remote message by logging the event and returning the
+    /// decoded message.
+    /// Reverts if the sender is not the enrolled remote router for the origin domain.
     #[storage(read)]
     pub fn handle(self, origin: u32, sender: b256, message_bytes: Bytes) -> Message {
         // Only the enrolled remote router can send messages to this contract
@@ -61,16 +65,26 @@ impl TokenRouterStorageKeys {
     }
 }
 
+// The following functions are used to convert between local and remote amounts.
+// The FuelVM uses u64s for token balance accounting, while other execution
+// environments tend to use U256s.
+// This means that tokens on remote domains may have higher decimals that cannot
+// be directly represented in the local domain. For example, a token with 18 decimals
+// on Ethereum should be represented as a u64 with 9 decimals on the FuelVM.
+
+/// Converts a local amount (u64) to a remote amount (U256).
 pub fn local_amount_to_remote_amount(amount: u64, local_decimals: u8, remote_decimals: u8) -> U256 {
     let amount = U256::from((0, 0, 0, amount));
     convert_decimals(amount, local_decimals, remote_decimals)
 }
 
+/// Converts a remote amount (U256) to a local amount (u64).
 pub fn remote_amount_to_local_amount(amount: U256, remote_decimals: u8, local_decimals: u8) -> u64 {
     let amount = convert_decimals(amount, remote_decimals, local_decimals);
     amount.as_u64().expect("remote to local amount conversion overflow")
 }
 
+/// Converts a U256 amount from one decimal representation to another.
 fn convert_decimals(amount: U256, from_decimals: u8, to_decimals: u8) -> U256 {
     if from_decimals < to_decimals {
         let decimal_difference: u64 = to_decimals - from_decimals;

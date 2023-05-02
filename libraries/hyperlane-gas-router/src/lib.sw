@@ -10,12 +10,22 @@ use hyperlane_router::*;
 
 use interface::GasRouterConfig;
 
+/// A library for sending messages to remote domains with a configured amount
+/// of gas. Expected to be used alongside the hyperlane-connection-client
+/// and hyperlane-router libraries.
+
 type DestinationGas = StorageMap<u32, u64>;
 
 // TODO: the desired interface for using a gas router
 // is to declare a single `GasRouter` struct in storage,
-// which would give access to Routers and destination gas.
-// However, at the time of writing, forc v0.37.1 doesn't allow
+// which would give access to Routers and destination gas. E.g.:
+//
+//   pub struct GasRouter {
+//       routers: Routers,
+//       destination_gas: StorageMap<u32, u64>,
+//   }
+//
+// However, at the time of writing, forc v0.38.0 doesn't allow
 // for multiple StorageMaps in a single struct.
 // Instead, callers are expected to declare two separate storage variables, e.g.:
 //
@@ -25,11 +35,6 @@ type DestinationGas = StorageMap<u32, u64>;
 // }
 //
 // Which can then be used to construct a `GasRouterStorageKeys`.
-
-// pub struct GasRouter {
-//     routers: Routers,
-//     destination_gas: StorageMap<u32, u64>,
-// }
 
 /// Storage keys for Routers and the destination_gas map.
 /// This is the type in which gas router functionality is
@@ -62,6 +67,8 @@ impl GasRouterStorageKeys {
 }
 
 impl GasRouterStorageKeys {
+    /// Pays for gas for an already-dispatched message to the destination domain,
+    /// using the configured gas amount.
     #[storage(read)]
     pub fn pay_for_gas(
         self,

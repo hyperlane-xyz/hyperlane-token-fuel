@@ -68,11 +68,14 @@ storage {
 configurable {
     NAME: str[64] = "HypErc20                                                        ",
     SYMBOL: str[32] = "HYP                             ",
+    /// The number of decimals for the local token on Fuel.
     LOCAL_DECIMALS: u8 = 9u8,
+    /// The number of decimals for the remote token on remote chains.
     REMOTE_DECIMALS: u8 = 18u8,
 }
 
 impl HypERC20 for Contract {
+    /// Initializes the contract. Reverts if called more than once.
     #[storage(read, write)]
     fn initialize(
         initial_owner: Identity,
@@ -91,25 +94,44 @@ impl HypERC20 for Contract {
 }
 
 impl Token for Contract {
+    /// The total supply of the token on the local chain.
     #[storage(read)]
     fn total_supply() -> U256 {
         total_supply()
     }
 
+    /// The number of decimals for the token.
     fn decimals() -> u8 {
         LOCAL_DECIMALS
     }
 
+    /// The name of the token with trailing whitespace to fit in 64 chars.
     fn name() -> str[64] {
         NAME
     }
 
+    /// The symbol of the token with trailing whitespace to fit in 32 chars.
     fn symbol() -> str[32] {
         SYMBOL
     }
 }
 
 impl TokenRouter for Contract {
+    /// Transfers the tokens sent along with this call to a remote recipient.
+    /// The tokens are burned on the local chain.
+    ///
+    /// Note that IGP payments must be made via a subsequent call to `pay_for_gas`.
+    /// This is because the FuelVM only allows one asset to be transferred in a
+    /// single function call.
+    ///
+    /// ### Arguments
+    ///
+    /// * `destination` - The destination domain ID.
+    /// * `recipient` - The recipient on the destination chain.
+    ///
+    /// ### Returns
+    ///
+    /// * `message_id` - The message ID of the message sent to the remote chain.
     #[storage(read, write)]
     #[payable]
     fn transfer_remote(destination: u32, recipient: b256) -> b256 {
@@ -121,6 +143,8 @@ impl TokenRouter for Contract {
         token_router_storage_keys().transfer_remote(destination, recipient, local_amount_to_remote_amount(amount, LOCAL_DECIMALS, REMOTE_DECIMALS), Option::None)
     }
 
+    /// Pays for interchain gas for a message previously sent via `transfer_remote`.
+    /// Refunds are sent to the msg sender.
     #[storage(read)]
     #[payable]
     fn pay_for_gas(message_id: b256, destination: u32) {
@@ -146,7 +170,8 @@ impl MessageRecipient for Contract {
 
         // Transferring an amount of 0 to an Address will cause a panic, which is
         // documented FuelVM behavior.
-        // We therefore do not attempt minting when the amount is zero.
+        // We therefore do not attempt minting when the amount is zero, but still allow
+        // the message to be processed.
         if amount > 0 {
             // TODO: support transferring to ContractIds.
             // There is no way to check if an address is a contract or not,
@@ -216,16 +241,19 @@ impl HyperlaneConnectionClientSetter for Contract {
 // ===========================================
 
 impl Ownable for Contract {
+    /// Gets the owner.
     #[storage(read)]
     fn owner() -> State {
         storage.ownership.owner()
     }
 
+    /// Transfers ownership if the caller is the owner.
     #[storage(read, write)]
     fn transfer_ownership(new_owner: Identity) {
         storage.ownership.transfer_ownership(new_owner)
     }
 
+    /// Sets ownership. Can only ever be called once.
     #[storage(read, write)]
     fn set_ownership(new_owner: Identity) {
         storage.ownership.set_ownership(new_owner)
@@ -237,17 +265,23 @@ impl Ownable for Contract {
 // ===========================================
 
 impl HyperlaneRouter for Contract {
+    /// Gets the router for a domain.
+    /// Called `routers` to match the interface in Solidity.
     #[storage(read)]
     fn routers(domain: u32) -> Option<b256> {
         storage.routers.routers(domain)
     }
 
+    /// Enrolls a router for a domain.
+    /// Only callable by the owner.
     #[storage(read, write)]
     fn enroll_remote_router(domain: u32, router: Option<b256>) {
         storage.ownership.only_owner();
         storage.routers.enroll_remote_router(domain, router);
     }
 
+    /// Enrolls multiple routers for multiple domains.
+    /// Only callable by the owner.
     #[storage(read, write)]
     fn enroll_remote_routers(configs: Vec<RemoteRouterConfig>) {
         storage.ownership.only_owner();
@@ -260,17 +294,22 @@ impl HyperlaneRouter for Contract {
 // ===========================================
 
 impl HyperlaneGasRouter for Contract {
+    /// Sets multiple destination gas configs, which are used to determine
+    /// the amount of gas that IGP payments should pay for.
+    /// Only callable by the owner.
     #[storage(read, write)]
     fn set_destination_gas_configs(configs: Vec<GasRouterConfig>) {
         storage.ownership.only_owner();
         gas_router_storage_keys().set_destination_gas_configs(configs);
     }
 
+    /// Quotes the payment for a message to the destination domain.
     #[storage(read)]
     fn quote_gas_payment(destination_domain: u32) -> u64 {
         gas_router_storage_keys().quote_gas_payment(destination_domain)
     }
 
+    /// Gets the amount of destination gas for a domain.
     #[storage(read)]
     fn destination_gas(domain: u32) -> u64 {
         gas_router_storage_keys().destination_gas(domain)
@@ -281,6 +320,7 @@ impl HyperlaneGasRouter for Contract {
 // ================= helpers =================
 // ===========================================
 
+/// Returns a `GasRouterStorageKeys`, which is used by the gas router.
 fn gas_router_storage_keys() -> GasRouterStorageKeys {
     GasRouterStorageKeys {
         routers: storage.routers,
@@ -288,28 +328,33 @@ fn gas_router_storage_keys() -> GasRouterStorageKeys {
     }
 }
 
+/// Returns a `TokenRouterStorageKeys`, which is used by the token router.
 fn token_router_storage_keys() -> TokenRouterStorageKeys {
     gas_router_storage_keys()
 }
 
+/// Burns the amount of tokens from this contract's balance, and reduces the total supply.
 #[storage(read, write)]
 fn burn_tokens(amount: u64) {
     burn(amount);
     storage.total_supply.write(total_supply() - U256::from((0, 0, 0, amount)));
 }
 
-#[storage(read, write)]
-fn mint_to_identity(amount: u64, recipient: Identity) {
-    mint_tokens(amount);
-    transfer(amount, contract_id(), recipient);
-}
-
+/// Mints the amount of tokens to this contract's balance, and increases the total supply.
 #[storage(read, write)]
 fn mint_tokens(amount: u64) {
     mint(amount);
     storage.total_supply.write(total_supply() + U256::from((0, 0, 0, amount)));
 }
 
+/// Mints the amount of tokens to the recipient, and increases the total supply.
+#[storage(read, write)]
+fn mint_to_identity(amount: u64, recipient: Identity) {
+    mint_tokens(amount);
+    transfer(amount, contract_id(), recipient);
+}
+
+/// Returns the total supply of tokens, defaulting to 0 if not initialized.
 #[storage(read)]
 fn total_supply() -> U256 {
     storage.total_supply.try_read().unwrap_or(U256::from((0, 0, 0, 0)))
